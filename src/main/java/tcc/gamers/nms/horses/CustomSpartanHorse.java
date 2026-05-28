@@ -11,8 +11,11 @@ import org.bukkit.Location;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Entity;
 import org.jetbrains.annotations.NotNull;
+import org.spartan.api.engine.SpartanModel;
 import org.spartan.api.engine.action.SpartanActionManager;
 import org.spartan.api.engine.config.SpartanModelConfig;
+import org.spartan.api.engine.context.SpartanContext;
+import org.spartan.api.exception.SpartanNativeException;
 import org.spartan.api.exception.SpartanPersistenceException;
 import tcc.gamers.TCCPlugin;
 import tcc.gamers.ai.spartan.context.PointInclinationContextElement;
@@ -150,54 +153,20 @@ public class CustomSpartanHorse<SpartanModelConfigType extends SpartanModelConfi
                 followPathGoal::getCurrentPoint
         );
 
-        var spartanContext = plugin
-                .getSpartanApi()
-                .createContext(
-                        "horse_context_" + this.getUUID()
-        );
-
-        Brain<CustomSpartanHorse<SpartanModelConfigType>> typedBrain = getTypedBrain();
+        SpartanContext spartanContext = buildSpartanContext(pointDistanceContextElement);
 
         var spartanActionManager = buildActionManager(
                 pointDistanceContextElement,
                 pointInclinationContextElement
         );
 
-        spartanContext.addElement(pointDistanceContextElement, 0);
-        pointDistanceContextElement.tick();
-
-
-
-        spartanContext.update();
-
+        Brain<CustomSpartanHorse<SpartanModelConfigType>> typedBrain = getTypedBrain();
 
         try {
-            var spartanModel = plugin.getSpartanApi().createModel(
-                    "horse_model_" + this.getUUID(),
-                    modelConfig,
-                    spartanContext,
-                    spartanActionManager
-            );
 
-            spartanModel.register();
+            var spartanModel = setupSpartanModel(spartanContext, spartanActionManager);
 
-            // Load trained model if it exists
-            var modelManager = new SpartanModelManager(spartanModel);
-            try {
-                modelManager.loadModel();
-            } catch (SpartanPersistenceException e) {
-                // Model doesn't exist yet, that's fine - it will be created
-            }
-
-            // Attach BetterModel visual to the existing Bukkit entity (if available).
-            try {
-                if (!this.horseConfig.getModelName().isBlank()) {
-                    this.visualModel = Model.attachTo(this.horseConfig.getModelName(), this.getBukkitEntity());
-                    this.visualModel.scale(this.horseConfig.getModelScale());
-                }
-            } catch (IllegalArgumentException ex) {
-                plugin.getLogger().warning("Model '" + this.horseConfig.getModelName() + "' not found or failed to attach: " + ex.getMessage());
-            }
+            createBetterModel();
 
             // Create model save path for automatic persistence
             var modelSavePath = Paths.get(plugin.getDataFolder().getAbsolutePath())
@@ -220,8 +189,8 @@ public class CustomSpartanHorse<SpartanModelConfigType extends SpartanModelConfi
                     Set.of(),
                     Set.of()
             );
-        } catch (IllegalArgumentException e) {
-            plugin.getLogger().warning("Skipping Spartan DDQN model for horse " + this.getUUID() + ": " + e.getMessage());
+        } catch (SpartanNativeException e) {
+            plugin.getLogger().warning("Skipping Spartan CRSAC model for horse " + this.getUUID() + ": " + e.getMessage());
 
             typedBrain.addActivity(
                     Activity.CORE,
@@ -232,7 +201,83 @@ public class CustomSpartanHorse<SpartanModelConfigType extends SpartanModelConfi
                     Set.of()
             );
         }
-        this.goalSelector.addGoal(0, new TickBrainGoal(this)); // custom goal to tick the brain every tick since horses seem not to do it
+        this.goalSelector.addGoal(
+                0,
+                new TickBrainGoal<>(
+                        this,
+                        (tickCount) -> {
+
+                            if (tickCount % horseConfig.getDespawnCheckPeriodTicks() == 0 && this.isFarFromAllPlayers(horseConfig.getDespawnDistance())) {
+                                this.despawnHorse();
+                                return;
+                            }
+                            try {
+                                this.controllerTick();
+                            } catch (Throwable ignored) {
+                            }
+
+                        })
+        );
+    }
+
+    private @NotNull SpartanModel<SpartanModelConfigType> setupSpartanModel(
+            @NotNull SpartanContext spartanContext,
+            @NotNull SpartanActionManager spartanActionManager
+    ) {
+        var spartanModel = plugin
+                .getSpartanApi()
+                .createModel(
+                "horse_model_" + this.getUUID(),
+                modelConfig,
+                        spartanContext,
+                        spartanActionManager
+        );
+
+        spartanModel.register();
+
+        loadTaxiModel(spartanModel);
+
+        return spartanModel;
+    }
+
+    private @NotNull SpartanContext buildSpartanContext(
+            @NotNull PointDistanceContextElement pointDistanceContextElement
+    ) {
+        SpartanContext spartanContext = plugin
+                .getSpartanApi()
+                .createContext(
+                        "horse_context_" + this.getUUID()
+        );
+
+
+        spartanContext.addElement(pointDistanceContextElement, 0);
+        pointDistanceContextElement.tick();
+
+
+        spartanContext.update();
+        return spartanContext;
+    }
+
+    private static <SpartanModelConfigType extends SpartanModelConfig> void loadTaxiModel(SpartanModel<SpartanModelConfigType> spartanModel) {
+        // Load trained model if it exists
+        var modelManager = new SpartanModelManager(spartanModel);
+        try {
+            modelManager.loadModel();
+        } catch (SpartanPersistenceException e) {
+            // Model doesn't exist yet, that's fine - it will be created
+        }
+    }
+
+    private void createBetterModel() {
+        // Attach BetterModel visual to the existing Bukkit entity (if available).
+        try {
+            if (!this.horseConfig.getModelName().isBlank()) {
+                this.visualModel = Model.attachTo(this.horseConfig.getModelName(), this.getBukkitEntity());
+                this.visualModel.scale(this.horseConfig.getModelScale());
+            }
+        } catch (IllegalArgumentException ex) {
+            plugin.getLogger().warning("Model '" + this.horseConfig.getModelName() + "' not found or failed to attach: " + ex.getMessage());
+        }
     }
 
     @SuppressWarnings("unchecked")

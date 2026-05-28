@@ -5,31 +5,25 @@ import net.democracycraft.democracyLib.api.config.Configurable;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("unused")
-@Configurable(name = "GeneratedHorseConfig")
-public class HorseConfig implements TCCConfig {
+@Configurable(name = "GeneratedZombieConfig")
+public class ZombieConfig implements TCCConfig {
 
-    @ConfigValue(comment = "Maximum speed of the horse in blocks per second.")
+    @ConfigValue(comment = "Maximum speed of the zombie in blocks per second.")
     private final double maxSpeed;
 
-    @ConfigValue(comment = "Minimum speed of the horse in blocks per second.")
+    @ConfigValue(comment = "Minimum speed of the zombie in blocks per second.")
     private final double minSpeed;
 
-    @ConfigValue(comment = "Name of the horse model to use.")
+    @ConfigValue(comment = "Name of the zombie model to use.")
     private final String modelName;
 
-    @ConfigValue(comment = "Scale factor for the horse model.")
+    @ConfigValue(comment = "Scale factor for the zombie model.")
     private final double modelScale;
 
-    @ConfigValue(comment = "MiniMessage string used as the horse custom name. Use %player% to include the player name.")
+    @ConfigValue(comment = "MiniMessage string used as the zombie custom name.")
     private final String nameMiniMessage;
 
-    @ConfigValue(comment = "Distance in blocks before the horse despawns if players are too far away.")
-    private final double despawnDistance;
-
-    @ConfigValue(comment = "How often (in ticks) to check if the horse should despawn.")
-    private final int despawnCheckPeriodTicks;
-
-    public HorseConfig(
+    public ZombieConfig(
             double maxSpeed,
             double minSpeed,
             @NotNull String modelName,
@@ -39,37 +33,29 @@ public class HorseConfig implements TCCConfig {
         this.minSpeed = minSpeed;
         this.modelName = modelName;
         this.modelScale = modelScale;
-        this.nameMiniMessage = "<green>Taxi for %player%";
-        this.despawnDistance = 45.0;
-        this.despawnCheckPeriodTicks = 20;
+        this.nameMiniMessage = "<red>Goblin";
     }
 
-    public HorseConfig(
+    public ZombieConfig(
             float maxSpeed,
             float minSpeed,
             @NotNull String modelName,
             double modelScale,
-            @NotNull String nameMiniMessage,
-            double despawnDistance,
-            int despawnCheckPeriodTicks
+            @NotNull String nameMiniMessage
     ) {
         this.maxSpeed = maxSpeed;
         this.minSpeed = minSpeed;
         this.modelName = modelName;
         this.modelScale = modelScale;
         this.nameMiniMessage = nameMiniMessage;
-        this.despawnDistance = despawnDistance;
-        this.despawnCheckPeriodTicks = despawnCheckPeriodTicks;
     }
 
-    public HorseConfig(@NotNull GeneratedHorseConfig config){
+    public ZombieConfig(@NotNull GeneratedZombieConfig config){
         this.maxSpeed = config.getMaxSpeed();
         this.minSpeed = config.getMinSpeed();
         this.modelName = config.getModelName();
         this.modelScale = config.getModelScale();
         this.nameMiniMessage = config.getNameMiniMessage();
-        this.despawnDistance = config.getDespawnDistance();
-        this.despawnCheckPeriodTicks = config.getDespawnCheckPeriodTicks();
     }
 
     public double getMaxSpeed() {
@@ -92,13 +78,5 @@ public class HorseConfig implements TCCConfig {
     @NotNull
     public String getNameMiniMessage() {
         return nameMiniMessage;
-    }
-
-    public double getDespawnDistance() {
-        return despawnDistance;
-    }
-
-    public int getDespawnCheckPeriodTicks() {
-        return despawnCheckPeriodTicks;
     }
 }

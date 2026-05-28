@@ -51,31 +51,45 @@ class TCCPlugin : JavaPlugin() {
 
     override fun onEnable() {
         spartanApi = SpartanApiImpl()
-        startSkript()
+        startSkriptApi()
+        
         skriptMutableRegistry = SkriptMutableRegistry()
         if (!this.dataFolder.exists()) this.dataFolder.mkdirs()
-        pathManager = PathManager(File(this.dataFolder, StorageFolder.PATHS.folderName))
-        sessionManager = SessionManager(this)
-        configManager = ConfigManager(this)
-        configManager.registerHorseConfig()
-        configManager.load()
-        registerCommand("tutorials", TutorialCommand(this))
-        val pathCommand = PathCommand(this, pathManager, sessionManager)
-        val spartanHorseCommand = SpartanHorseCommand(this, pathManager)
-        val configCommand = ConfigCommand(this)
-        registerCommand("path", pathCommand, pathCommand)
-        // register taxi command (previously spartanhorse)
-        registerCommand("taxi", spartanHorseCommand, spartanHorseCommand)
-        registerCommand("config", configCommand, configCommand)
+        startManagers()
 
-        HiddenPlayerManager.start(this)
+        registerCommands()
 
         registerListeners(
             TutorialStarter(this)
         )
     }
 
-    private fun startSkript() {
+    private fun registerCommands() {
+        val pathCommand = PathCommand(this, pathManager, sessionManager)
+        val spartanHorseCommand = SpartanHorseCommand(this, pathManager)
+        val configCommand = ConfigCommand(this)
+
+        registerCommand("tutorials", TutorialCommand(this))
+        registerCommand("path", pathCommand, pathCommand)
+        registerCommand("taxi", spartanHorseCommand, spartanHorseCommand)
+        registerCommand("tccconfig", configCommand, configCommand)
+    }
+
+    private fun startManagers() {
+        HiddenPlayerManager.start(this)
+        pathManager = PathManager(File(this.dataFolder, StorageFolder.PATHS.folderName))
+        sessionManager = SessionManager(this)
+        bootConfig()
+    }
+
+    private fun bootConfig() {
+        configManager = ConfigManager(this)
+        configManager.registerHorseConfig()
+        configManager.registerZombieConfig()
+        configManager.load()
+    }
+
+    private fun startSkriptApi() {
         skriptAddon = Skript.instance().registerAddon(TCCPlugin::class.java, "tcc")
 
         skriptAddon.let {

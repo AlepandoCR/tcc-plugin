@@ -14,11 +14,11 @@ commands:
     description: "Spawn a taxi (Spartan horse) and assign a path"
     usage: /taxi spawn <pathId> <start_finish|finish_start>
     permission: taxi.use
-  config:
+  tccconfig:
     description: "Reload plugin configurations"
     usage: /config reload
     permission: config.use
-    aliases: [horseconfig]
+    aliases: [tcc]
 
 permissions:
   tutorials.start:

@@ -21,6 +21,8 @@ class ConfigManager(private val plugin: TCCPlugin) {
 
     private lateinit var horseConfigHandle: ConfigHandle<HorseConfig>
 
+    private lateinit var zombieConfigHandle: ConfigHandle<ZombieConfig>
+
     fun load(): Int = reloadAll()
 
     fun reloadAll(): Int {
@@ -43,14 +45,45 @@ class ConfigManager(private val plugin: TCCPlugin) {
             folder = StorageFolder.HORSE_CONFIG,
             fileName = "horse.yml",
             generatedClass = GeneratedHorseConfig::class.java,
-            defaultConfig = HorseConfig(3.5f, 1.0f, "wolfmount", 1.5, "<green>Taxi for %player%"),
+            defaultConfig = HorseConfig(
+                3.5f,
+                1.0f,
+                "wolfmount",
+                1.5,
+                "<green>Taxi for %player%",
+                40.0,
+                20
+            ),
             mapper = { generated -> HorseConfig(generated) }
         )
         horseConfigHandle = handle
+
+
         return handle
     }
 
-    fun <G : GeneratedConfig, T : PluginConfig> register(
+    fun registerZombieConfig(): ConfigHandle<ZombieConfig> {
+        val zombieHandle = register(
+            key = "zombie",
+            folder = StorageFolder.ZOMBIE_CONFIG,
+            fileName = "zombie.yml",
+            generatedClass = GeneratedZombieConfig::class.java,
+            defaultConfig = ZombieConfig(
+                1.0f,
+                1.0f,
+                "zombiemount",
+                1.5,
+                "<green>Goblin"
+            ),
+            mapper = { generated -> ZombieConfig(generated) }
+        )
+
+        zombieConfigHandle = zombieHandle
+
+        return zombieHandle
+    }
+
+    fun <G : GeneratedConfig, T : TCCConfig> register(
         key: String,
         folder: StorageFolder,
         fileName: String,
@@ -74,13 +107,16 @@ class ConfigManager(private val plugin: TCCPlugin) {
     val horseConfig: HorseConfig
         get() = horseConfigHandle.current
 
-    class ConfigHandle<T : PluginConfig>(initial: T) {
+    val zombieConfig: ZombieConfig
+        get() = zombieConfigHandle.current
+
+    class ConfigHandle<T : TCCConfig>(initial: T) {
         @Volatile
         var current: T = initial
             internal set
     }
 
-    private class ConfigRegistration<G : GeneratedConfig, T : PluginConfig>(
+    private class ConfigRegistration<G : GeneratedConfig, T : TCCConfig>(
         private val key: String,
         private val folder: StorageFolder,
         private val fileName: String,

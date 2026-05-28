@@ -34,6 +34,7 @@ enum class StorageFolder(val folderName: String) {
     PATHS("paths"),
     TUTORIALS("tutorials"),
     HORSE_CONFIG("ai/horse"),
+    ZOMBIE_CONFIG("ai/zombie"),
     SPARTAN_MODEL("ai/model"),
     GAME_DATA("game_data"),
     CLOUD(GAME_DATA.folderName + "/cloud"),
