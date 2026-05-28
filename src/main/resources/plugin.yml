@@ -1,0 +1,56 @@
+name: tcc-plugin
+version: '1.0.0'
+main: tcc.gamers.TCCPlugin
+api-version: '26.1.2'
+commands:
+  tutorials:
+    description: "Plays a tutorial"
+    usage: /<command> name
+  path:
+    description: "Create and edit saved paths"
+    usage: /path <create|edit|delete|list|cancel>
+    permission: path.use
+  taxi:
+    description: "Spawn a taxi (Spartan horse) and assign a path"
+    usage: /taxi spawn <pathId> <start_finish|finish_start>
+    permission: taxi.use
+  config:
+    description: "Reload plugin configurations"
+    usage: /config reload
+    permission: config.use
+    aliases: [horseconfig]
+
+permissions:
+  tutorials.start:
+    description: Permission to simulate a tutorial.
+    default: op
+  path.use:
+    description: Permission to use path editor commands
+    default: op
+  path.create:
+    description: Permission to create paths
+    default: op
+  path.edit:
+    description: Permission to edit paths
+    default: op
+  path.list:
+    description: Permission to list paths
+    default: true
+  path.cancel:
+    description: Permission to cancel sessions
+    default: true
+  path.delete:
+    description: Permission to delete saved paths
+    default: op
+  taxi.use:
+    description: Permission to use the taxi command
+    default: op
+  taxi.spawn:
+    description: Permission to spawn taxi horses
+    default: op
+  config.use:
+    description: Permission to use config commands
+    default: op
+  config.reload:
+    description: Permission to reload all configs
+    default: op
