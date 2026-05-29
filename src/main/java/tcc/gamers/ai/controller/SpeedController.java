@@ -1,6 +1,7 @@
 package tcc.gamers.ai.controller;
 
 import org.bukkit.Bukkit;
+import tcc.gamers.TCCPlugin;
 
 public class SpeedController implements Controller {
 
@@ -29,7 +30,12 @@ public class SpeedController implements Controller {
      * @param minSpeed minimum allowed speed
      * @param maxDeltaPerTick maximum change in speed per tick (smaller = smoother)
      */
-    public SpeedController(float initialSpeed, float maxSpeed, float minSpeed, float maxDeltaPerTick) {
+    public SpeedController(
+            float initialSpeed,
+            float maxSpeed,
+            float minSpeed,
+            float maxDeltaPerTick
+    ) {
         this.maxSpeed = maxSpeed;
         this.minSpeed = minSpeed;
         this.maxDeltaPerTick = Math.max(0f, maxDeltaPerTick);
@@ -79,6 +85,7 @@ public class SpeedController implements Controller {
     /**
      * Advance the current speed towards the target speed. Call once per server tick.
      */
+    @Override
     public void tick() {
         float diff = targetSpeed - currentSpeed;
         if (Math.abs(diff) <= 1e-6f) return;
@@ -86,7 +93,7 @@ public class SpeedController implements Controller {
         currentSpeed += change;
         // Optionally log fine-grained updates at FINE level
         try {
-            Bukkit.getLogger().fine("[tcc-plugin][SpeedController] tick update current=" + currentSpeed + " target=" + targetSpeed + " change=" + change);
+            TCCPlugin.getInstance().getLogger().fine("[tcc-plugin][SpeedController] tick update current=" + currentSpeed + " target=" + targetSpeed + " change=" + change);
         } catch (NoClassDefFoundError ignored) {
         }
     }
