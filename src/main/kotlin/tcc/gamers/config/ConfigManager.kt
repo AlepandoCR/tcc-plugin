@@ -21,7 +21,7 @@ class ConfigManager(private val plugin: TCCPlugin) {
 
     private lateinit var horseConfigHandle: ConfigHandle<HorseConfig>
 
-    private lateinit var goblinConfigHandle: ConfigHandle<GoblinConfig>
+    private lateinit var raidMobsConfigHandle: ConfigHandle<RaidMobsConfig>
 
     fun load(): Int = reloadAll()
 
@@ -62,13 +62,13 @@ class ConfigManager(private val plugin: TCCPlugin) {
         return handle
     }
 
-    fun registerZombieConfig(): ConfigHandle<GoblinConfig> {
+    fun registerZombieConfig(): ConfigHandle<RaidMobsConfig> {
         val zombieHandle = register(
             key = "goblin",
             folder = StorageFolder.ZOMBIE_CONFIG,
             fileName = "goblin.yml",
-            generatedClass = GeneratedZombieConfig::class.java,
-            defaultConfig = GoblinConfig(
+            generatedClass = GeneratedRaidMobsConfig::class.java,
+            defaultConfig = RaidMobsConfig(
                 3.0f,
                 1.0f,
                 1.5,
@@ -85,10 +85,10 @@ class ConfigManager(private val plugin: TCCPlugin) {
                 "tcc",
                 "goblin"
             ),
-            mapper = { generated -> GoblinConfig(generated) }
+            mapper = { generated -> RaidMobsConfig(generated) }
         )
 
-        goblinConfigHandle = zombieHandle
+        raidMobsConfigHandle = zombieHandle
 
         return zombieHandle
     }
@@ -117,8 +117,8 @@ class ConfigManager(private val plugin: TCCPlugin) {
     val horseConfig: HorseConfig
         get() = horseConfigHandle.current
 
-    val goblinConfig: GoblinConfig
-        get() = goblinConfigHandle.current
+    val raidMobsConfig: RaidMobsConfig
+        get() = raidMobsConfigHandle.current
 
     class ConfigHandle<T : TCCConfig>(initial: T) {
         @Volatile

@@ -61,7 +61,7 @@ public class EffectDynamicUpdate extends Effect {
 
     @Override
     public boolean init(
-            Expression<?> @NotNull [] exprs,
+            Expression<?>[] exprs,
             int matchedPattern,
             Kleenean isDelayed,
             ParseResult parseResult

@@ -5,8 +5,8 @@ import net.democracycraft.democracyLib.api.config.Configurable;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("unused")
-@Configurable(name = "GeneratedZombieConfig")
-public class GoblinConfig implements TCCConfig {
+@Configurable(name = "GeneratedRaidMobsConfig")
+public class RaidMobsConfig implements TCCConfig {
 
     @ConfigValue(comment = "Maximum speed of the zombie in blocks per second.")
     private final double maxSpeed;
@@ -53,7 +53,7 @@ public class GoblinConfig implements TCCConfig {
     @ConfigValue(comment = "Min amount of aggressiveness for goblins")
     private final double minAggressiveness;
 
-    public GoblinConfig(
+    public RaidMobsConfig(
             float maxSpeed,
             float minSpeed,
             double modelScale,
@@ -87,7 +87,7 @@ public class GoblinConfig implements TCCConfig {
         this.friendLookupDistance = friendLookupDistance;
     }
 
-    public GoblinConfig(@NotNull GeneratedZombieConfig config){
+    public RaidMobsConfig(@NotNull GeneratedRaidMobsConfig config){
         this.maxSpeed = config.getMaxSpeed();
         this.minSpeed = config.getMinSpeed();
         this.modelName = config.getModelName();

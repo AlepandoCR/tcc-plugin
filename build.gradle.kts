@@ -13,6 +13,7 @@ repositories {
     mavenCentral()
     maven(uri("https://jitpack.io"))
     maven(uri("https://repo.skriptlang.org/releases"))
+    maven(uri("https://mvn.lumine.io/repository/maven-public/"))
     maven("https://repo.extendedclip.com/releases/")
 }
 
@@ -24,26 +25,31 @@ kotlin{
 dependencies {
     val democracyLibVersion = "3f0213ee92"
     val democracyLib = "com.github.MCCitiesNetwork:DemocracyLib:$democracyLibVersion"
-    implementation(democracyLib)
-    paperweight.paperDevBundle("26.1.2.+")
+
+    paperweight.paperDevBundle("26.1.2.+") // nms
 
     val skriptVersion = "2.15.2"
 
-    compileOnly("me.clip:placeholderapi:2.12.2")
 
+    //integrations
+    compileOnly("me.clip:placeholderapi:2.12.2")
+    compileOnly("io.github.toxicity188:bettermodel-bukkit-api:3.0.1")
+    compileOnly("io.lumine:Mythic-Dist:5.12.1")
     compileOnly("com.github.SkriptLang:Skript:$skriptVersion")
+
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    compileOnly("io.github.toxicity188:bettermodel-bukkit-api:3.0.1")
 
-    implementation("io.github.alepandocr:spartan-internal:1.0.35:linux")
-    implementation("io.github.alepandocr:spartan-api:1.0.35")
+    implementation("io.github.alepandocr:spartan-internal:1.0.35:linux") //RL
+    implementation("io.github.alepandocr:spartan-api:1.0.35") //RL
+
+    implementation(democracyLib) // config and db
 
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
 
-    kapt(democracyLib)
+    kapt(democracyLib) // annotation processor for kotlin
 }
 
 tasks {

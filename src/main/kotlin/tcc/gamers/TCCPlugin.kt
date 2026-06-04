@@ -1,6 +1,8 @@
 package tcc.gamers
 
 import ch.njol.skript.Skript
+import io.lumine.mythic.bukkit.MythicBukkit
+import jdk.jfr.DataAmount
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.TabCompleter
@@ -12,7 +14,10 @@ import org.spartan.internal.facade.SpartanApiImpl
 import tcc.gamers.config.ConfigManager
 import tcc.gamers.config.HorseConfig
 import tcc.gamers.config.command.ConfigCommand
+import tcc.gamers.config.command.RaidAdminCommand
+import tcc.gamers.data.DataDrivenManager
 import tcc.gamers.horses.command.SpartanHorseCommand
+import tcc.gamers.raid.RaidManager
 import tcc.gamers.skript.EffectDynamicUpdate
 import tcc.gamers.skript.ExpressionMutableValue
 import tcc.gamers.skript.SkriptMutableRegistry
@@ -23,6 +28,7 @@ import tcc.gamers.tutorials.tutorial.command.PathCommand
 import tcc.gamers.tutorials.tutorial.command.TutorialCommand
 import tcc.gamers.tutorials.tutorial.manager.PathManager
 import tcc.gamers.tutorials.tutorial.session.SessionManager
+import tcc.gamers.util.DataDrivenLoader
 import tcc.gamers.util.StorageFolder
 import tcc.gamers.util.hasTutorialTag
 import java.io.File
@@ -35,6 +41,9 @@ class TCCPlugin : JavaPlugin() {
     lateinit var configManager: ConfigManager
     lateinit var skriptMutableRegistry: SkriptMutableRegistry
     lateinit var skriptAddon: SkriptAddon
+    lateinit var dataDrivenManager: DataDrivenManager
+    lateinit var raidManager: RaidManager
+    lateinit var mythicApi: MythicBukkit
 
     companion object {
         @JvmStatic
@@ -47,9 +56,11 @@ class TCCPlugin : JavaPlugin() {
 
     override fun onLoad() {
         instance = this
+        dataDrivenManager = DataDrivenManager(this)
     }
 
     override fun onEnable() {
+        mythicApi = MythicBukkit.inst()
         spartanApi = SpartanApiImpl()
         startSkriptApi()
         
@@ -62,17 +73,21 @@ class TCCPlugin : JavaPlugin() {
         registerListeners(
             TutorialStarter(this)
         )
+
+        raidManager = RaidManager(this)
     }
 
     private fun registerCommands() {
         val pathCommand = PathCommand(this, pathManager, sessionManager)
         val spartanHorseCommand = SpartanHorseCommand(this, pathManager)
         val configCommand = ConfigCommand(this)
+        val raidCommand = RaidAdminCommand(this)
 
         registerCommand("tutorials", TutorialCommand(this))
         registerCommand("path", pathCommand, pathCommand)
         registerCommand("taxi", spartanHorseCommand, spartanHorseCommand)
         registerCommand("tccconfig", configCommand, configCommand)
+        registerCommand("raids", raidCommand, raidCommand)
     }
 
     private fun startManagers() {

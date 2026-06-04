@@ -18,7 +18,7 @@ import org.spartan.api.engine.context.SpartanContext;
 import org.spartan.api.exception.SpartanNativeException;
 import org.spartan.api.exception.SpartanPersistenceException;
 import tcc.gamers.TCCPlugin;
-import tcc.gamers.config.GoblinConfig;
+import tcc.gamers.config.RaidMobsConfig;
 import tcc.gamers.ai.minecraft.SpartanBrainTickerBehaviorControl;
 import tcc.gamers.ai.minecraft.TickBrainGoal;
 import tcc.gamers.ai.spartan.monitor.SpartanActionMonitor;
@@ -34,18 +34,18 @@ public class CustomSpartanZombie<SpartanModelConfigType extends SpartanModelConf
     private final SpartanModelConfigType modelConfig;
     private final TCCPlugin plugin;
     private final SpartanActionMonitor actionMonitor;
-    private final GoblinConfig goblinConfig;
+    private final RaidMobsConfig raidMobsConfig;
 
     private Model<? extends Entity> visualModel;
 
     public CustomSpartanZombie(
             @NotNull Level level,
-            @NotNull GoblinConfig goblinConfig,
+            @NotNull RaidMobsConfig raidMobsConfig,
             @NotNull SpartanModelConfigType modelConfig,
             @NotNull TCCPlugin plugin
     ) {
         super(EntityType.ZOMBIE, level);
-        this.goblinConfig = goblinConfig;
+        this.raidMobsConfig = raidMobsConfig;
         this.modelConfig = modelConfig;
         this.plugin = plugin;
         this.actionMonitor = new SpartanActionMonitor(plugin.getLogger(), "zombie " + this.getUUID());
@@ -82,7 +82,7 @@ public class CustomSpartanZombie<SpartanModelConfigType extends SpartanModelConf
         this.setInvulnerable(false);
 
         this.visualModel = Model.attachTo(
-                this.goblinConfig.getModelName(),
+                this.raidMobsConfig.getModelName(),
                 this.getBukkitEntity()
         );
     }
@@ -189,12 +189,12 @@ public class CustomSpartanZombie<SpartanModelConfigType extends SpartanModelConf
 
     private void createBetterModel() {
         try {
-            if (!this.goblinConfig.getModelName().isBlank()) {
-                this.visualModel = Model.attachTo(this.goblinConfig.getModelName(), this.getBukkitEntity());
-                this.visualModel.scale(this.goblinConfig.getModelScale());
+            if (!this.raidMobsConfig.getModelName().isBlank()) {
+                this.visualModel = Model.attachTo(this.raidMobsConfig.getModelName(), this.getBukkitEntity());
+                this.visualModel.scale(this.raidMobsConfig.getModelScale());
             }
         } catch (IllegalArgumentException ex) {
-            plugin.getLogger().warning("Model '" + this.goblinConfig.getModelName() + "' not found or failed to attach: " + ex.getMessage());
+            plugin.getLogger().warning("Model '" + this.raidMobsConfig.getModelName() + "' not found or failed to attach: " + ex.getMessage());
         }
     }
 

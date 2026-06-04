@@ -19,6 +19,11 @@ commands:
     usage: /config reload
     permission: config.use
     aliases: [tcc]
+  raids:
+    description: "command to manage raids"
+    usage: /raids [start|stop]
+    permission: raid.admin
+
 
 permissions:
   tutorials.start:
@@ -53,4 +58,7 @@ permissions:
     default: op
   config.reload:
     description: Permission to reload all configs
+    default: op
+  raid.admin:
+    description: Permission to manage raids
     default: op

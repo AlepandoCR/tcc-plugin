@@ -1,9 +1,11 @@
 package tcc.gamers.ai.controller;
 
+import io.lumine.mythic.core.mobs.ActiveMob;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
-import tcc.gamers.config.GoblinConfig;
+import tcc.gamers.config.RaidMobsConfig;
+import tcc.gamers.raid.RaidMob;
 
 public class EmotionController implements Controller{
 
@@ -19,44 +21,50 @@ public class EmotionController implements Controller{
 
     private double previousHpRatio = 0.0;
 
-    private final @NotNull LivingEntity entity;
+    private final @NotNull RaidMob entity;
 
-    private final @NotNull GoblinConfig goblinConfig;
+    private final @NotNull RaidMobsConfig raidMobsConfig;
 
     private @NotNull EmotionStrategy emotionStrategy;
 
     public EmotionController(
-            @NotNull LivingEntity entity,
-            @NotNull GoblinConfig config
+            @NotNull RaidMob entity,
+            @NotNull RaidMobsConfig config
     ) {
         this.entity = entity;
-        this.goblinConfig = config;
+        this.raidMobsConfig = config;
         this.emotionStrategy = EmotionStrategy.AGGRESSIVE_REPOSITION;
     }
 
     @Override
     public void tick() {
-        var healthAttribute = entity.getAttribute(Attribute.MAX_HEALTH);
-        if (healthAttribute != null) {
-            var totalHealth = healthAttribute.getValue();
+        if(entity.isSpawned() && entity.isAlive()){
+            var maybeSpawnedEntity = entity.getSpawnedEntity();
 
-            var currentHealth = entity.getHealth();
-
-            double hpRatio = currentHealth / totalHealth;
-            double hpDelta = hpRatio - previousHpRatio;
-
-            double focusFactor = hpDelta + (friendDensity * goblinConfig.getFocusFriendRecoveryRate());
-
-            this.focus = Math.clamp(this.focus + focusFactor, 0.0, 1.0);
-            this.previousHpRatio = hpRatio;
+            maybeSpawnedEntity.ifPresent(this::doTick);
+            updateEmotionStrategy();
         }
+    }
 
-        updateEmotionStrategy();
+    private void doTick(@NotNull ActiveMob spawnedEntity) {
+        var unnecessaryMythicMobsEntityWrapper = spawnedEntity.getEntity(); // just to make fun of them c:
+
+        var maxHealth = spawnedEntity.getEntity().getMaxHealth();
+
+        var currentHealth = unnecessaryMythicMobsEntityWrapper.getHealth();
+
+        double hpRatio = currentHealth / maxHealth;
+        double hpDelta = hpRatio - previousHpRatio;
+
+        double focusFactor = hpDelta + (friendDensity * raidMobsConfig.getFocusFriendRecoveryRate());
+
+        this.focus = Math.clamp(this.focus + focusFactor, 0.0, 1.0);
+        this.previousHpRatio = hpRatio;
     }
 
     private void updateEmotionStrategy() {
-        boolean highWorry = worry > goblinConfig.getMaxWorry();
-        boolean highAggression = aggressiveness > goblinConfig.getMaxAggressiveness();
+        boolean highWorry = worry > raidMobsConfig.getMaxWorry();
+        boolean highAggression = aggressiveness > raidMobsConfig.getMaxAggressiveness();
         boolean highFocus = focus > 0.5;
 
         if (highWorry && !highAggression) {
@@ -118,7 +126,7 @@ public class EmotionController implements Controller{
     }
 
     public void updateTargetDensity(int entityAmount) {
-        double radius = goblinConfig.getTargetLookupDistance();
+        double radius = raidMobsConfig.getTargetLookupDistance();
         this.targetDensity = 1.0 - Math.exp(-entityAmount / radius);
     }
 
@@ -131,17 +139,15 @@ public class EmotionController implements Controller{
     }
 
     public void updateFriendDensity(int entityAmount) {
-        double radius = goblinConfig.getTargetLookupDistance();
+        double radius = raidMobsConfig.getTargetLookupDistance();
         this.friendDensity = 1.0 - Math.exp(-entityAmount / radius);
     }
 
-    private enum EmotionStrategy{
-        DEFENSIVE_REPOSITION, // low focus - high worry - low aggressiveness (move to the closest ally)
-        AGGRESSIVE_REPOSITION, // low focus - low worry - high aggressiveness (move to the closes ally with the highest target density)
-        SUPPORT_REPOSITION, // high focus - low worry - low aggressiveness (move to the closest ally with the highest target density and the most worry) not the same as aggressive
-        PUSH_REPOSITION, // high focus - low worry - high aggressiveness (move to the closest ally with the highest target density and lowest worry)
-        COVER_REPOSITION, // whatever focus - high worry - low aggressiveness (move to the closest ally with the most worry and lowest goblin density)
+    public @NotNull EmotionStrategy getEmotionStrategy(){
+        return emotionStrategy;
     }
+
+
 }
 
 

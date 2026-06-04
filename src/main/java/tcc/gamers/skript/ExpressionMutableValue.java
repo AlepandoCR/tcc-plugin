@@ -44,7 +44,7 @@ public class ExpressionMutableValue extends SimpleExpression<Object> {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(
-            Expression<?> @NotNull [] exprs,
+            @NotNull Expression<?>[] exprs,
             int matchedPattern,
             @NotNull Kleenean isDelayed,
             @NotNull ParseResult parseResult
@@ -54,7 +54,7 @@ public class ExpressionMutableValue extends SimpleExpression<Object> {
     }
 
     @Override
-    protected Object @Nullable [] get(@NotNull Event event) {
+    protected Object[] get(@NotNull Event event) {
         String id = idExpression.getSingle(event);
         if (id == null) return null;
 

@@ -38,9 +38,22 @@ class ConfigCommand(
                     true
                 } else {
                     val count = plugin.configManager.reloadAll()
-                    sender.sendComponent(
-                        Component.text("Reloaded $count config(s).").color(NamedTextColor.GREEN)
-                    )
+
+                    plugin.dataDrivenManager.reload().thenAccept {
+                        plugin.logger.fine("datadriven files loaded for tcc plugin")
+
+                        plugin.server
+                            .scheduler
+                            .runTask(plugin, Runnable {
+                                plugin.raidManager.reload()
+                                sender.sendComponent(
+                                    Component.text("Reloaded $count config(s) and synchronized Raids.").color(NamedTextColor.GREEN)
+                                )
+                            })
+                    }.exceptionally { ex ->
+                        plugin.logger.severe("Error reloading data-driven configs: ${ex.message}")
+                        null
+                    }
                     true
                 }
             }

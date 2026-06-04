@@ -16,8 +16,8 @@ public abstract class AbstractEntityPointContextElement extends SpartanSingleCon
     protected final Supplier<Optional<Location>> pointSupplier;
 
     public AbstractEntityPointContextElement(
-            @NotNull Supplier<@NotNull Optional<Entity>> entitySupplier,
-            @NotNull Supplier<@NotNull Optional<Location>> pointSupplier
+            @NotNull Supplier<Optional<Entity>> entitySupplier,
+            @NotNull Supplier<Optional<Location>> pointSupplier
     ) {
         this.rawValue = 0;
         this.entitySupplier = entitySupplier;

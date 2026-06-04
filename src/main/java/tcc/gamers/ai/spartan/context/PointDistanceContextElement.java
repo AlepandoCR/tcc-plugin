@@ -18,8 +18,8 @@ public class PointDistanceContextElement extends SpartanSingleContextElement {
     private final Supplier<Optional<Location>> pointSupplier;
 
     public PointDistanceContextElement(
-            @NotNull Supplier<@NotNull Optional<Entity>> entitySupplier,
-            @NotNull Supplier<@NotNull Optional<Location>> pointSupplier
+            @NotNull Supplier<Optional<Entity>> entitySupplier,
+            @NotNull Supplier<Optional<Location>> pointSupplier
     ) {
         this.value = 0;
         this.entitySupplier = entitySupplier;

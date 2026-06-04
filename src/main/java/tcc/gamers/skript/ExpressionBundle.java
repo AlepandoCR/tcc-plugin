@@ -26,7 +26,6 @@ public class ExpressionBundle {
     private final Expression<?>[] expressions;
     private final int matchedPattern;
 
-    @Contract(pure = true)
     private ExpressionBundle(@NotNull Builder builder) {
         this.event          = builder.event;
         this.expressions    = builder.expressions;

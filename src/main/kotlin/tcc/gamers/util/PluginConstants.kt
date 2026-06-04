@@ -19,7 +19,8 @@ enum class PermissionNode(val node: String) {
     TAXI_USE("taxi.use"),
     TAXI_SPAWN("taxi.spawn"),
     CONFIG_USE("config.use"),
-    CONFIG_RELOAD("config.reload")
+    CONFIG_RELOAD("config.reload"),
+    RAID_ADMIN("raid.admin")
 }
 
 fun CommandSender.hasPermission(permission: PermissionNode): Boolean {
@@ -40,7 +41,10 @@ enum class StorageFolder(val folderName: String) {
     CLOUD(GAME_DATA.folderName + "/cloud"),
     TREE(GAME_DATA.folderName + "/tree"),
     TREE_DATA(TREE.folderName + "/tree-game-data.yml"),
-    CLOUD_DATA(CLOUD.folderName + "/cloud-game-data.yml"),;
+    CLOUD_DATA(CLOUD.folderName + "/cloud-game-data.yml"),
+    RAID(GAME_DATA.folderName + "/raid"),
+    RAID_MOB(RAID.folderName + "/mob"),
+    RAID_AREA(RAID.folderName + "/area");
 
     fun getFolder(plugin: TCCPlugin): File {
         val file = File(plugin.dataFolder, folderName)

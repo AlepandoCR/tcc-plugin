@@ -8,7 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
-import tcc.gamers.config.GoblinConfig;
+import tcc.gamers.config.RaidMobsConfig;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -27,7 +27,7 @@ public class GoblinController<EntityType extends Entity> implements Controller{
 
     private final @NotNull List<LivingEntity> nearbyFriends;
 
-    private final @NotNull GoblinConfig goblinConfig;
+    private final @NotNull RaidMobsConfig raidMobsConfig;
 
     private final @NotNull EmotionController emotionController;
 
@@ -47,33 +47,33 @@ public class GoblinController<EntityType extends Entity> implements Controller{
     public GoblinController(
             @NotNull TCCPlugin plugin,
             @NotNull EntityType entity,
-            @NotNull GoblinConfig goblinConfig,
+            @NotNull RaidMobsConfig raidMobsConfig,
             @NotNull EmotionController emotionController
     ) {
         this.plugin = plugin;
         this.entity = entity;
         this.currentTarget = entity.getBukkitEntity().getLocation();
-        this.goblinConfig = goblinConfig;
+        this.raidMobsConfig = raidMobsConfig;
         this.emotionController = emotionController;
         this.nearbyEnemies = new ArrayList<>();
         this.nearbyFriends = new ArrayList<>();
-        this.friendNamespacedKey = new NamespacedKey(goblinConfig.getEntityNamespace(), goblinConfig.getEntityKey());
-        this.targetDensityNamespacedKey = new NamespacedKey(goblinConfig.getEntityNamespace(), "target_density");
-        this.friendDensityNamespacedKey = new NamespacedKey(goblinConfig.getEntityNamespace(), "friend_density");
-        this.worryNamespacedKey = new NamespacedKey(goblinConfig.getEntityNamespace(), "worry");
-        this.aggressivenessNamespacedKey = new NamespacedKey(goblinConfig.getEntityNamespace(), "aggressiveness");
+        this.friendNamespacedKey = new NamespacedKey(raidMobsConfig.getEntityNamespace(), raidMobsConfig.getEntityKey());
+        this.targetDensityNamespacedKey = new NamespacedKey(raidMobsConfig.getEntityNamespace(), "target_density");
+        this.friendDensityNamespacedKey = new NamespacedKey(raidMobsConfig.getEntityNamespace(), "friend_density");
+        this.worryNamespacedKey = new NamespacedKey(raidMobsConfig.getEntityNamespace(), "worry");
+        this.aggressivenessNamespacedKey = new NamespacedKey(raidMobsConfig.getEntityNamespace(), "aggressiveness");
     }
 
     @Override
     public void tick() {
         // update danger
-        if(ticks % goblinConfig.getTargetLookupFrequency() == 0) {
+        if(ticks % raidMobsConfig.getTargetLookupFrequency() == 0) {
             nearbyEnemies.clear();
             nearbyFriends.clear();
             // update nearbyEnemies and targetDensity
-            var configDistance = goblinConfig.getTargetLookupDistance();
+            var configDistance = raidMobsConfig.getTargetLookupDistance();
 
-            var teamConfigDistance = goblinConfig.getFriendLookupDistance();
+            var teamConfigDistance = raidMobsConfig.getFriendLookupDistance();
 
             var closeEntities = this.entity.getBukkitEntity()
                     .getNearbyEntities(

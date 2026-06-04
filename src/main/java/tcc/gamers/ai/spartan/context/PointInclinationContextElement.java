@@ -11,8 +11,8 @@ import java.util.function.Supplier;
 public class PointInclinationContextElement extends AbstractEntityPointContextElement {
 
     public PointInclinationContextElement(
-            @NotNull Supplier<@NotNull Optional<Entity>> entitySupplier,
-            @NotNull Supplier<@NotNull Optional<Location>> pointSupplier
+            @NotNull Supplier<Optional<Entity>> entitySupplier,
+            @NotNull Supplier<Optional<Location>> pointSupplier
     ) {
         super(entitySupplier, pointSupplier);
     }
@@ -22,7 +22,7 @@ public class PointInclinationContextElement extends AbstractEntityPointContextEl
     }
 
     @Override
-    protected double calculateRawValue(Location entityLoc, Location targetLoc) {
+    protected double calculateRawValue(@NotNull Location entityLoc, @NotNull Location targetLoc) {
         double dx = targetLoc.getX() - entityLoc.getX();
         double dy = targetLoc.getY() - entityLoc.getY();
         double dz = targetLoc.getZ() - entityLoc.getZ();
