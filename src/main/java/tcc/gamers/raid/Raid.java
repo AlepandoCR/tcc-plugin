@@ -72,7 +72,7 @@ public class Raid extends SupervisedArea { // raid IS a supervised area
 
             Location spawnLoc = this.spawnLocation.clone().add(offsetX, 0, offsetZ);
 
-            spawnLoc.setY(spawnLoc.getWorld().getHighestBlockYAt(spawnLoc) + 1.0);
+            spawnLoc.setY(spawnLoc.getY() + 1.0);
 
             mob.spawnMob(spawnLoc);
         });
