@@ -2,13 +2,11 @@ package tcc.gamers.ai.item.dragon;
 
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.MusicInstrument;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -95,28 +93,56 @@ public class DragonHornListener implements Listener {
         return loc.add(direction).getBlock();
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onInventoryClick(@NotNull InventoryClickEvent event) {
         ItemStack clickedItem = event.getCurrentItem();
         ItemStack cursorItem = event.getCursor();
 
-        if (clickedItem == null || clickedItem.getType() == Material.AIR || cursorItem.getType() == Material.AIR) {
+        if (clickedItem == null) {
             return;
         }
 
-        if (DragonHornHelper.isDragonHorn(clickedItem) && DragonHornHelper.isSoulItem(cursorItem)) {
-            event.setCancelled(true);
-
-            int soulsToAdd = cursorItem.getAmount();
-
-            DragonHornHelper.addSouls(clickedItem, soulsToAdd);
-
-            event.getWhoClicked().setItemOnCursor(null);
-
-            event.getWhoClicked().getWorld().playSound(
-                    event.getWhoClicked().getLocation(),
-                    Sound.ITEM_SPYGLASS_USE, 1.0f, 1.5f
-            );
+        if (clickedItem.getType().isAir() || cursorItem.getType().isAir()) {
+            return;
         }
+
+        if (!DragonHornHelper.isDragonHorn(clickedItem)) {
+            return;
+        }
+
+        if (!DragonHornHelper.isSoulItem(cursorItem)) {
+            return;
+        }
+
+        event.setCancelled(true);
+
+        Player player = (Player) event.getWhoClicked();
+
+        ItemStack horn = clickedItem.clone();
+        DragonHornHelper.addSouls(horn, cursorItem.getAmount());
+
+        ItemStack newCursor = cursorItem.clone();
+        newCursor.setAmount(0);
+
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            var inv = event.getClickedInventory();
+            if (inv == null) return;
+
+            ItemStack currentItem = inv.getItem(event.getSlot());
+            if (!DragonHornHelper.isDragonHorn(currentItem)) return;
+
+            inv.setItem(event.getSlot(), horn);
+
+            player.setItemOnCursor(null);
+
+            player.updateInventory();
+        });
+
+        player.playSound(
+                player.getLocation(),
+                Sound.ITEM_SPYGLASS_USE,
+                1.0f,
+                1.5f
+        );
     }
 }
