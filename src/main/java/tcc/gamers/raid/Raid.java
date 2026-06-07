@@ -1,13 +1,21 @@
 package tcc.gamers.raid;
 
 import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.bossbar.BossBarViewer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.minecraft.world.entity.animal.nautilus.Nautilus;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import tcc.gamers.TCCPlugin;
+import tcc.gamers.ai.event.RaidCompleteEvent;
+import tcc.gamers.ai.event.RaidPlayerJoinEvent;
+import tcc.gamers.ai.event.RaidPlayerLeaveEvent;
+import tcc.gamers.ai.item.dragon.DragonHornHelper;
 import tcc.gamers.area.Area;
 import tcc.gamers.area.SupervisedArea;
 import tcc.gamers.data.RaidDto;
@@ -16,32 +24,27 @@ import tcc.gamers.data.RaidMobDto;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Raid extends SupervisedArea { // raid IS a supervised area
+public class Raid extends SupervisedArea {
 
     private final @NotNull Collection<RaidMob> raidMobs;
-
     private final @NotNull UUID raidId;
-
     private final @NotNull BossBar bossBar;
-
     private boolean isCompleted = false;
-
     private final @NotNull Location spawnLocation;
+    private final @NotNull RaidDto raidDto;
+    private final @NotNull Collection<UUID> participants;
+
+    private RaidLobbyTask lobbyTask;
 
     public Raid(
             @NotNull RaidDto raidDto,
             @NotNull Area area,
             @NotNull TCCPlugin plugin
     ) throws NoSuchElementException {
-        super(
-                area,
-                plugin,
-                raidDto.getTickFrequency()
-        );
+        super(area, plugin, raidDto.getTickFrequency());
 
         var maybeLocation = raidDto.toLocation();
-
-        if(maybeLocation.isEmpty()){
+        if (maybeLocation.isEmpty()) {
             throw new NoSuchElementException("World not valid for location on raid dto");
         }
 
@@ -50,19 +53,52 @@ public class Raid extends SupervisedArea { // raid IS a supervised area
         var raidMobsStrings = raidDto.getRaidMobs();
 
         this.raidMobs = new ArrayList<>();
-
-        loadRaidMobs(
-                plugin,
-                raidMobsStrings,
-                raidMobsDto,
-                getAmountsMap(
-                        raidDto,
-                        raidMobsStrings
-                )
-        );
+        loadRaidMobs(plugin, raidMobsStrings, raidMobsDto, getAmountsMap(raidDto, raidMobsStrings));
 
         this.bossBar = buildBossBar();
         this.raidId = UUID.randomUUID();
+        this.raidDto = raidDto;
+        participants = new ArrayList<>();
+    }
+
+    public long getTickFrequency() { return raidDto.getTickFrequency(); }
+
+    public int getRequiredPlayersAmount() {
+        return Math.max(1, raidMobs.size() / 2);
+    }
+
+    public boolean isCompleted() {
+        return this.isCompleted;
+    }
+
+
+    @Override
+    protected void onPlayerJoin(@NotNull Player player) {
+        if (this.onTick) {
+            if(!participants.contains(player.getUniqueId())){
+                participants.add(player.getUniqueId());
+            }
+            bossBar.addViewer(player);
+        } else if (!isCompleted) {
+            if (lobbyTask == null || lobbyTask.isCancelled()) {
+                lobbyTask = new RaidLobbyTask(this, this.plugin);
+            }
+        }
+        new RaidPlayerJoinEvent(this, player).callEvent();
+    }
+
+    @Override
+    protected void onPlayerLeave(@NotNull Player player) {
+        bossBar.removeViewer(player);
+        player.sendActionBar(Component.empty());
+
+        if (!this.onTick && getEntitiesInAreaOfType(Player.class).isEmpty()) {
+            if (lobbyTask != null && !lobbyTask.isCancelled()) {
+                lobbyTask.cancel();
+                lobbyTask = null;
+            }
+        }
+        new RaidPlayerLeaveEvent(this, player).callEvent();
     }
 
     public void spawnMobs() {
@@ -71,9 +107,7 @@ public class Raid extends SupervisedArea { // raid IS a supervised area
             double offsetZ = ThreadLocalRandom.current().nextDouble(-2.5, 2.5);
 
             Location spawnLoc = this.spawnLocation.clone().add(offsetX, 0, offsetZ);
-
             spawnLoc.setY(spawnLoc.getY() + 1.0);
-
             mob.spawnMob(spawnLoc);
         });
     }
@@ -83,154 +117,140 @@ public class Raid extends SupervisedArea { // raid IS a supervised area
             this.start();
         }
 
-        if (!this.onTick) {
-            showBossBarToPlayers();
-        }
-
+        getEntitiesInAreaOfType(Player.class).forEach(bossBar::addViewer);
         this.onTick = true;
     }
 
-
-    public void stopRaidTickLogic(){
+    public void stopRaidTickLogic() {
         this.onTick = false;
     }
 
     @Override
     protected void onTick() {
-        checkForCompletion();
-
         tickEmotionControllers();
 
         float targetProgress = getClampedProgress();
-
         if (Math.abs(this.bossBar.progress() - targetProgress) > 0.01f) {
             this.bossBar.progress(targetProgress);
         }
 
-        showBossBarToPlayers();
-
         if (raidMobs.stream().noneMatch(RaidMob::isAlive)) {
             this.isCompleted = true;
-
-            removeBossBarToPlayers();
+            removeBossBarFromPlayers();
+            congratulatePlayers();
+            this.stop();
             stopRaidTickLogic();
         }
+    }
+
+    @Contract("-> new")
+    public @NotNull Raid copy() {
+        return new Raid(this.raidDto, this, this.plugin);
     }
 
     @Override
     protected void onStop() {
         getAliveMobs().forEach(RaidMob::despawnMob);
-        removeBossBarToPlayers();
+        removeBossBarFromPlayers();
+        if (lobbyTask != null && !lobbyTask.isCancelled()) {
+            lobbyTask.cancel();
+        }
+
+        plugin.raidManager.unregisterActiveRaid(this);
     }
 
     @Override
     protected void onStart() {
-        showBossBarToPlayers();
-
         bossBar.addFlag(BossBar.Flag.CREATE_WORLD_FOG);
         bossBar.addFlag(BossBar.Flag.DARKEN_SCREEN);
+
+        plugin.raidManager.registerActiveRaid(this);
     }
 
-    public @NotNull Collection<RaidMob> getRaidMobs(){
-        return raidMobs;
-    }
+    public @NotNull Collection<RaidMob> getRaidMobs() { return raidMobs; }
+    public @NotNull UUID getRaidUniqueIdentifier() { return this.raidId; }
+    public void setCompleted(boolean completed) { this.isCompleted = completed; }
 
-    public @NotNull UUID getRaidUniqueIdentifier(){
-        return this.raidId;
+    public @NotNull Collection<RaidMob> getAliveMobs() {
+        return raidMobs.stream().filter(RaidMob::isAlive).toList();
     }
-
-    public @NotNull Collection<RaidMob> getAliveMobs(){
-        return raidMobs.stream()
-                .filter(RaidMob::isAlive)
-                .toList();
-    }
-
-    public void addRaidMob(@NotNull RaidMob raidMob){
-        raidMobs.add(raidMob);
-    }
-
-    public void removeRaidMob(@NotNull RaidMob raidMob){
-        raidMobs.remove(raidMob);
-    }
-
-    public void setCompleted(boolean completed){
-        this.isCompleted = completed;
-    }
-
 
     private @Range(from = 0, to = 1) float getClampedProgress() {
         int mobAmount = raidMobs.size();
-
-        if (mobAmount == 0) {
-            return 0.0f;
-        }
-
-        long mobsAlive = raidMobs.stream()
-                .filter(RaidMob::isAlive)
-                .count();
-
+        if (mobAmount == 0) return 0.0f;
+        long mobsAlive = raidMobs.stream().filter(RaidMob::isAlive).count();
         float progress = (float) mobsAlive / mobAmount;
-
         return Math.max(0.0f, Math.min(1.0f, progress));
     }
 
-    private void tickEmotionControllers(){
+    private void tickEmotionControllers() {
         raidMobs.forEach(mob -> mob.getEmotionController().tick());
     }
 
-    private void showBossBarToPlayers() {
-        this.getEntitiesInAreaOfType(Player.class).forEach(
-                player -> player.showBossBar(bossBar)
-        );
-    }
-
-    private void congratulatePlayers() {
-        this.getEntitiesInAreaOfType(Player.class).forEach(
-                player -> player.sendMessage(
-                        Component.text("Has ")
-                                .color(NamedTextColor.GRAY)
-                                .append(Component.text(" derrotado")
-                                        .color(NamedTextColor.RED)
-                                        .append(Component.text(" la")
-                                                .color(NamedTextColor.GRAY)
-                                                .append(Component.text(" raid")
-                                                        .color(NamedTextColor.GOLD)
-                                                        .append(Component.text("!")
-                                                                .color(NamedTextColor.GRAY)
-                                                        )
-                                                )
-                                        )
-                                )
-                )
-        );
-    }
-
-    private void removeBossBarToPlayers() {
-        this.getEntitiesInAreaOfType(Player.class).forEach(
-                player -> player.hideBossBar(bossBar)
-        );
-    }
-
-    private void checkForCompletion() {
-        if(this.isCompleted){
-            congratulatePlayers();
-            this.stop();
+    private void removeBossBarFromPlayers() {
+        for (BossBarViewer viewer : bossBar.viewers()) {
+            if (viewer instanceof Player player) {
+                bossBar.removeViewer(player);
+            }
         }
     }
 
-    private void loadRaidMobs(
-            @NotNull TCCPlugin plugin,
-            @NotNull List<String> raidMobsStrings,
-            @NotNull Collection<RaidMobDto> raidMobsDto,
-            @NotNull Map<String, Integer> mobsWithAmount
-    ) {
+    private void congratulatePlayers() {
+        participants
+                .stream()
+                .map(Bukkit::getPlayer)
+                .filter(Objects::nonNull)
+                .forEach(player -> {
+                    player.sendMessage(Component.text("Has derrotado la raid!").color(NamedTextColor.GOLD));
+
+                    var karmaGain = Math.max(raidDto.getRaidMobs().size() / 4, 1);
+
+                    new RaidCompleteEvent(this, player, karmaGain).callEvent();
+
+                    if(player.hasPermission("faccion.nube")){
+                        var karma = plugin.configManager
+                                .getLiveGameDataManager()
+                                .getCloudsKarma() + karmaGain;
+
+                        plugin.configManager
+                                .getLiveGameDataManager()
+                                .getCloudsKarmaMutable()
+                                .set(
+                                        karma
+                                );
+
+                        plugin.configManager.getPersistenceGameDataManager().setCloudKarma(karma);
+
+                    } else if (player.hasPermission("faccion.arbol")) {
+                        var karma = plugin.configManager
+                                .getLiveGameDataManager()
+                                .getTreeKarma() + karmaGain;
+
+                        var mutable =  plugin.configManager
+                                .getLiveGameDataManager()
+                                .getTreeKarmaMutable();
+
+                        mutable.set(karma);
+
+                        plugin.configManager.getPersistenceGameDataManager().setTreeKarma(karma);
+                    }
+
+                    player
+                            .getInventory()
+                            .addItem(
+                                    DragonHornHelper.createSoulShard(raidDto.getRaidMobs().size()
+                                    )
+                            ); // give souls for each mob
+                }
+        );
+    }
+
+    private void loadRaidMobs(@NotNull TCCPlugin plugin, @NotNull List<String> raidMobsStrings, @NotNull Collection<RaidMobDto> raidMobsDto, @NotNull Map<String, Integer> mobsWithAmount) {
         for (String raidMobsString : raidMobsStrings) {
             var maybeRaidMobDto = raidMobsDto.stream().filter(dto -> dto.getRaidMobId().equalsIgnoreCase(raidMobsString)).findFirst();
-
-            if(maybeRaidMobDto.isPresent()){
+            if (maybeRaidMobDto.isPresent()) {
                 var raidMobDto = maybeRaidMobDto.get();
                 var entityAmount = mobsWithAmount.get(raidMobDto.getRaidMobId());
-
                 for (int i = 0; i < entityAmount; i++) {
                     raidMobs.add(new RaidMob(raidMobDto, plugin));
                 }
@@ -241,31 +261,18 @@ public class Raid extends SupervisedArea { // raid IS a supervised area
     @NotNull
     private static Map<String, Integer> getAmountsMap(@NotNull RaidDto raidDto, @NotNull List<String> raidMobsStrings) {
         var raidMobsAmounts = raidDto.getRaidMobsAmounts();
-
-        if(raidMobsAmounts.length != raidMobsStrings.size()){
-            throw new InputMismatchException("there should be an amount for each mob, lists size should match on raid dto");
+        if (raidMobsAmounts.length != raidMobsStrings.size()) {
+            throw new InputMismatchException("There should be an amount for each mob. Lists size should match on raid dto.");
         }
-
         Map<String, Integer> mobsWithAmount = new HashMap<>();
-
         for (int i = 0; i < raidMobsStrings.size(); i++) {
-            String raidMobsString = raidMobsStrings.get(i);
-            int amount = raidMobsAmounts[i];
-
-            mobsWithAmount.put(raidMobsString, amount);
+            mobsWithAmount.put(raidMobsStrings.get(i), raidMobsAmounts[i]);
         }
-
         return mobsWithAmount;
     }
 
     @NotNull
     private static BossBar buildBossBar() {
-        return BossBar.bossBar(
-                Component.text("Progreso de la raid").color(NamedTextColor.RED),
-                1.0f,
-                BossBar.Color.YELLOW,
-                BossBar.Overlay.NOTCHED_12
-        );
+        return BossBar.bossBar(Component.text("Progreso de la raid").color(NamedTextColor.RED), 1.0f, BossBar.Color.YELLOW, BossBar.Overlay.NOTCHED_12);
     }
-
 }

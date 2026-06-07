@@ -12,6 +12,7 @@ import tcc.gamers.util.Ticker;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public abstract class SupervisedArea extends Area implements Ticker {
@@ -66,23 +67,36 @@ public abstract class SupervisedArea extends Area implements Ticker {
 
     protected abstract void onStart();
 
+    protected abstract void onPlayerJoin(@NotNull Player player);
+
+    protected abstract void onPlayerLeave(@NotNull Player player);
+
     @Override
     public void tick() {
-        entitiesInArea.removeIf(entity -> !contains(entity)); // cleanup removal
+        List<Entity> previousEntities = new ArrayList<>(entitiesInArea);
+        entitiesInArea.clear();
 
         getCenter().getNearbyEntities(
                 getXRadius(),
                 getYRadius(),
                 getZRadius()
-        ).forEach(entity -> { // check with same radius
-            if(contains(entity)) {
+        ).forEach(entity -> {
+            if (contains(entity)) {
                 entitiesInArea.add(entity);
-            } else {
-                entitiesInArea.remove(entity);
             }
         });
 
+        for (Entity current : entitiesInArea) {
+            if (!previousEntities.contains(current) && current instanceof Player) {
+                onPlayerJoin((Player) current);
+            }
+        }
 
+        for (Entity previous : previousEntities) {
+            if (!entitiesInArea.contains(previous) && previous instanceof Player) {
+                onPlayerLeave((Player) previous);
+            }
+        }
 
         if(onTick){
             onTick();

@@ -37,8 +37,8 @@ class Model<T : Entity> private constructor(
         tracker.animate(animationName, AnimationModifier.DEFAULT)
     }
 
-    fun rotate(yaw: Float) {
-        tracker.rotation { ModelRotation(0f, yaw) }
+    fun rotate(x: Float, y: Float) {
+        tracker.rotation { ModelRotation(x, y) }
     }
 
     fun scale(value: Double) {

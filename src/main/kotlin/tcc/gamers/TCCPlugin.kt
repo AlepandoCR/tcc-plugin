@@ -11,10 +11,13 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.skriptlang.skript.addon.SkriptAddon
 import org.spartan.api.SpartanApi
 import org.spartan.internal.facade.SpartanApiImpl
+import tcc.gamers.ai.event.skript.SkriptEventRegistry
+import tcc.gamers.ai.item.dragon.DragonHornListener
 import tcc.gamers.config.ConfigManager
 import tcc.gamers.config.HorseConfig
 import tcc.gamers.config.command.ConfigCommand
 import tcc.gamers.config.command.RaidAdminCommand
+import tcc.gamers.config.command.SpawnNautilusCommand
 import tcc.gamers.data.DataDrivenManager
 import tcc.gamers.horses.command.SpartanHorseCommand
 import tcc.gamers.raid.RaidManager
@@ -71,8 +74,11 @@ class TCCPlugin : JavaPlugin() {
         registerCommands()
 
         registerListeners(
-            TutorialStarter(this)
+            TutorialStarter(this),
+            DragonHornListener(this)
         )
+
+        SkriptEventRegistry.registerAll(skriptAddon)
 
         raidManager = RaidManager(this)
     }
@@ -82,12 +88,14 @@ class TCCPlugin : JavaPlugin() {
         val spartanHorseCommand = SpartanHorseCommand(this, pathManager)
         val configCommand = ConfigCommand(this)
         val raidCommand = RaidAdminCommand(this)
+        val nautilusCommand = SpawnNautilusCommand(this)
 
         registerCommand("tutorials", TutorialCommand(this))
         registerCommand("path", pathCommand, pathCommand)
         registerCommand("taxi", spartanHorseCommand, spartanHorseCommand)
         registerCommand("tccconfig", configCommand, configCommand)
         registerCommand("raids", raidCommand, raidCommand)
+        registerCommand("nauti", nautilusCommand, nautilusCommand)
     }
 
     private fun startManagers() {

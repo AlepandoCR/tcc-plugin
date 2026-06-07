@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  *   <li>Index {@code 1} — always the value payload (read by {@link SkriptMutable}).</li>
  * </ul>
  */
-public class ExpressionBundle {
+public class  ExpressionBundle {
 
     private final Event event;
     private final Expression<?>[] expressions;

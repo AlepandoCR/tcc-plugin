@@ -52,7 +52,9 @@ public class SkriptMutable<ObjectType extends Serializable> {
 
     public void set(@NotNull ObjectType value) {
         this.value.set(value);
+        this.onMutableSave.onSave(value); //save
     }
+
 
     /**
      * Updates the stored value from the given bundle.

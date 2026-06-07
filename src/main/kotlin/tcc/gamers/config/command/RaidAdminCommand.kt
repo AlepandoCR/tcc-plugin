@@ -10,7 +10,6 @@ import tcc.gamers.TCCPlugin
 import tcc.gamers.util.PermissionNode
 import tcc.gamers.util.hasPermission
 import tcc.gamers.util.sendComponent
-import java.util.UUID
 
 class RaidAdminCommand(
     private val plugin: TCCPlugin
@@ -27,37 +26,80 @@ class RaidAdminCommand(
             return true
         }
 
-        if (args.size < 2) {
-            sender.sendComponent(Component.text("Usage: /raidadmin <start|stop> <raid-id>").color(NamedTextColor.YELLOW))
+        if (args.isEmpty()) {
+            sender.sendComponent(Component.text("Usage: /raidadmin <action> [raid-id]").color(NamedTextColor.YELLOW))
             return true
         }
 
         val action = args[0].lowercase()
-        val raidId = args[1]
 
-        val raid = plugin.raidManager.raids.find { it.identifier.equals(raidId, ignoreCase = true) }
-
-        if (raid == null) {
-            sender.sendComponent(Component.text("Raid with ID '$raidId' not found.").color(NamedTextColor.RED))
+        if (action == "startall") {
+            val templates = plugin.raidManager.availableRaidTemplateCopies
+            if (templates.isEmpty()) {
+                sender.sendComponent(Component.text("No available raid templates to start.").color(NamedTextColor.YELLOW))
+                return true
+            }
+            templates.forEach { it.start() }
+            sender.sendComponent(Component.text("Started all ${templates.size} available raids.").color(NamedTextColor.GREEN))
             return true
         }
 
+        if (action == "stopall") {
+            val activeRaids = plugin.raidManager.activeRaids
+            if (activeRaids.isEmpty()) {
+                sender.sendComponent(Component.text("No active raids are running.").color(NamedTextColor.YELLOW))
+                return true
+            }
+            val count = activeRaids.size
+            ArrayList(activeRaids).forEach {
+                it.stopRaidTickLogic()
+                it.stop()
+            }
+            sender.sendComponent(Component.text("Stopped all $count active raids.").color(NamedTextColor.GREEN))
+            return true
+        }
+
+        if (args.size < 2) {
+            sender.sendComponent(Component.text("Usage: /raidadmin $action <raid-id>").color(NamedTextColor.YELLOW))
+            return true
+        }
+
+        val raidId = args[1]
+
         when (action) {
             "start" -> {
+                val raid = plugin.raidManager.getRaidTemplateCopy(raidId).orElse(null)
+                if (raid == null) {
+                    sender.sendComponent(Component.text("Raid template '$raidId' not found.").color(NamedTextColor.RED))
+                    return true
+                }
                 raid.start()
                 sender.sendComponent(Component.text("Raid '$raidId' has been started.").color(NamedTextColor.GREEN))
             }
             "stop" -> {
-                raid.stop()
-                sender.sendComponent(Component.text("Raid '$raidId' has been stopped.").color(NamedTextColor.GREEN))
+                val activeRaids = plugin.raidManager.getActiveRaidsByIdentifier(raidId)
+                if (activeRaids.isEmpty()) {
+                    sender.sendComponent(Component.text("No active instances found running for '$raidId'.").color(NamedTextColor.YELLOW))
+                    return true
+                }
+                val count = activeRaids.size
+                activeRaids.forEach { it.stop() }
+                sender.sendComponent(Component.text("Stopped $count active instance(s) of '$raidId'.").color(NamedTextColor.GREEN))
             }
             "trigger" -> {
-                raid.spawnMobs()
-                raid.startRaidTickLogic()
-                sender.sendComponent(Component.text("Raid '$raidId' has been triggered.").color(NamedTextColor.GREEN))
+                val activeRaids = plugin.raidManager.getActiveRaidsByIdentifier(raidId)
+                if (activeRaids.isEmpty()) {
+                    sender.sendComponent(Component.text("No active instances found running for '$raidId' to trigger.").color(NamedTextColor.RED))
+                    return true
+                }
+                activeRaids.forEach {
+                    it.spawnMobs()
+                    it.startRaidTickLogic()
+                }
+                sender.sendComponent(Component.text("Triggered ${activeRaids.size} active instance(s) of '$raidId'.").color(NamedTextColor.GREEN))
             }
             else -> {
-                sender.sendComponent(Component.text("Unknown action '$action'. Use start or stop.").color(NamedTextColor.RED))
+                sender.sendComponent(Component.text("Unknown action '$action'. Use start, stop, trigger, startall, or stopall.").color(NamedTextColor.RED))
             }
         }
 
@@ -71,10 +113,15 @@ class RaidAdminCommand(
         args: Array<out String>
     ): List<String> {
         return when (args.size) {
-            1 -> listOf("start", "stop", "trigger").filter { it.startsWith(args[0], ignoreCase = true) }
+            1 -> listOf("start", "stop", "trigger", "startall", "stopall").filter { it.startsWith(args[0], ignoreCase = true) }
             2 -> {
-                val raidIds = plugin.raidManager.raids.map { it.identifier }
-                raidIds.filter { it.startsWith(args[1], ignoreCase = true) }
+                val action = args[0].lowercase()
+                if (action == "startall" || action == "stopall") {
+                    emptyList()
+                } else {
+                    val raidIds = plugin.raidManager.raidTemplates.map { it.identifier }
+                    raidIds.filter { it.startsWith(args[1], ignoreCase = true) }
+                }
             }
             else -> emptyList()
         }

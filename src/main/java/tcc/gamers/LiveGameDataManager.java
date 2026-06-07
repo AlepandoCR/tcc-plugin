@@ -54,4 +54,12 @@ public class LiveGameDataManager {
     public int getTreeKarma() {
         return treeKarma.get();
     }
+
+    public @NotNull SkriptMutable<Integer> getCloudsKarmaMutable(){
+        return cloudsKarma;
+    }
+
+    public @NotNull SkriptMutable<Integer> getTreeKarmaMutable(){
+        return treeKarma;
+    }
 }
