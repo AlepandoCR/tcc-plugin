@@ -14,6 +14,7 @@ public class NautilusAnimationManager {
         IDLE_GROUND("idle"),
         WALK_GROUND("walk"),
         FLY_IDLE("fly_idle"),
+        ATTACK("attack"),
         BELLY("belly");
 
         private final String id;

@@ -4,7 +4,6 @@ import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.bossbar.BossBarViewer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.minecraft.world.entity.animal.nautilus.Nautilus;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -15,7 +14,7 @@ import tcc.gamers.TCCPlugin;
 import tcc.gamers.ai.event.RaidCompleteEvent;
 import tcc.gamers.ai.event.RaidPlayerJoinEvent;
 import tcc.gamers.ai.event.RaidPlayerLeaveEvent;
-import tcc.gamers.ai.item.dragon.DragonHornHelper;
+import tcc.gamers.item.dragon.DragonHornHelper;
 import tcc.gamers.area.Area;
 import tcc.gamers.area.SupervisedArea;
 import tcc.gamers.data.RaidDto;
@@ -163,6 +162,11 @@ public class Raid extends SupervisedArea {
     protected void onStart() {
         bossBar.addFlag(BossBar.Flag.CREATE_WORLD_FOG);
         bossBar.addFlag(BossBar.Flag.DARKEN_SCREEN);
+        this.getEntitiesInAreaOfType(Player.class).forEach(player ->{
+            if(!participants.contains(player.getUniqueId())){
+                participants.add(player.getUniqueId()); // add all player already inside
+            }
+        });
 
         plugin.raidManager.registerActiveRaid(this);
     }

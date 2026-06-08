@@ -2,6 +2,8 @@ name: tcc-plugin
 version: '1.0.0'
 main: tcc.gamers.TCCPlugin
 api-version: '26.1.2'
+depend:
+  - Skript
 commands:
   tutorials:
     description: "Plays a tutorial"

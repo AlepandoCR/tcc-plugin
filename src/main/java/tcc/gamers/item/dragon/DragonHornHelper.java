@@ -1,4 +1,4 @@
-package tcc.gamers.ai.item.dragon;
+package tcc.gamers.item.dragon;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;

@@ -1,15 +1,20 @@
 package tcc.gamers.nms.nautilus;
 
+import com.google.common.collect.ImmutableList;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.animal.nautilus.AbstractNautilus;
 import net.minecraft.world.entity.animal.nautilus.Nautilus;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Location;
@@ -22,11 +27,15 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tcc.gamers.TCCPlugin;
+import tcc.gamers.ai.minecraft.TickBrainGoal;
+import tcc.gamers.ai.minecraft.dragon.DragonAttackBehaviorControl;
+import tcc.gamers.ai.minecraft.dragon.DragonFollowOwnerBehaviorControl;
 import tcc.gamers.tutorials.model.Model;
 import tcc.gamers.util.namespacedkey.TCCNameSpacedKeys;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
+import java.util.Set;
 
 public class CustomNautilus extends Nautilus {
 
@@ -50,7 +59,7 @@ public class CustomNautilus extends Nautilus {
     private int stallTicks = 0;
 
     private Vec3 smoothedLookAngle = Vec3.ZERO;
-    private float previousYRot = 0.0F; // Guardamos la rotación anterior para calcular el giro
+    private float previousYRot = 0.0F;
 
     private int dashTicksRemaining = 0;
     private Vec3 dashVector = Vec3.ZERO;
@@ -62,24 +71,44 @@ public class CustomNautilus extends Nautilus {
     private int idleTicks = 0;
     private static final int MAX_DASH_COMBO = 20;
     private static final double COMBO_BONUS_PER_STACK = 0.30;
+    public static final int MAX_OWNER_DISTANCE = 25;
+    public static final int OWNER_FOLLOW_DISTANCE = 3;
+    public static final int DRAGON_ATTACK_DISTANCE = 16;
+
+    private double baseMovementSpeed = -1.0;
+    private boolean speedReducedForAI = false;
+
+    private final DragonAttackBehaviorControl<CustomNautilus> attackBehaviorControl;
 
     private final org.bukkit.entity.Player owner;
 
     private @Nullable Model<org.bukkit.entity.Nautilus> model;
 
     public CustomNautilus(@NotNull World level, @NotNull TCCPlugin plugin, @NotNull org.bukkit.entity.Player owner) {
+        this.attackBehaviorControl = new DragonAttackBehaviorControl<>(plugin);
         super(EntityType.NAUTILUS, ((CraftWorld) level).getHandle());
         this.world = level;
         this.plugin = plugin;
         this.owner = owner;
+        this.getAttributes().registerAttribute(Attributes.FLYING_SPEED);
+        var attr = this.getAttribute(Attributes.FLYING_SPEED);
+        if(attr != null){
+            attr.setBaseValue(0.01);
+        }
+
+        var movAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (movAttr != null) {
+            this.baseMovementSpeed = movAttr.getBaseValue();
+        }
         this.animationManager = new NautilusAnimationManager();
+        this.moveControl = new FlyingMoveControl(this, 20, true);
+        this.setupBrain();
     }
 
     public void spawn(@NotNull Location location) {
         var bukkitEntity = this.getBukkitNautilus();
         world.addEntity(bukkitEntity);
         var key = TCCNameSpacedKeys.FLYING_NAUTILUS.getNamespacedKey();
-        setSpeed();
 
         this.model = Model.attachTo("fairy_dragon", bukkitEntity);
         this.animationManager.attachModel(this.model);
@@ -88,6 +117,49 @@ public class CustomNautilus extends Nautilus {
         bukkitEntity.setTamed(true);
         bukkitEntity.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 1);
         bukkitEntity.teleport(location);
+    }
+
+    public NautilusAnimationManager getAnimationManager() {
+        return animationManager;
+    }
+
+    @Override
+    public void registerGoals() {
+        goalSelector.removeAllGoals((_) -> true);
+    }
+
+    @NotNull
+    @Override
+    protected PathNavigation createNavigation(@NotNull Level level){
+        return new FlyingPathNavigation(this, level);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setupBrain() {
+        var typedBrain = (Brain<CustomNautilus>) this.brain;
+
+        typedBrain.addActivity(
+                Activity.CORE,
+                ImmutableList.of(
+                        Pair.of(
+                                1,
+                                new DragonFollowOwnerBehaviorControl<>(plugin)
+                        ),
+                        Pair.of(
+                                2,
+                                attackBehaviorControl
+                        )
+                ),
+                Set.of(),
+                Set.of()
+        );
+
+
+        this.goalSelector.addGoal(0, new TickBrainGoal<>(this, (_ -> {})));
+    }
+
+    public DragonAttackBehaviorControl<CustomNautilus> getAttackBehaviorControl() {
+        return attackBehaviorControl;
     }
 
     public @NotNull Optional<Model<org.bukkit.entity.Nautilus>> getModel(){
@@ -102,18 +174,13 @@ public class CustomNautilus extends Nautilus {
     }
 
     @Override
-    protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
-        return new FlyingPathNavigation(this, level);
-    }
-
-    @Override
     public int getJumpCooldown() {
         return 0;
     }
 
     @Override
     public void tick() {
-        if(!owner.isValid() || !owner.isOnline() || owner.getWorld() != getBukkitNautilus().getWorld() || owner.getLocation().distance(getBukkitNautilus().getLocation()) > 15){
+        if(!owner.isValid() || !owner.isOnline() || owner.getWorld() != getBukkitNautilus().getWorld() || owner.getLocation().distance(getBukkitNautilus().getLocation()) > MAX_OWNER_DISTANCE){
             getModel().ifPresent(Model::despawn);
             this.remove(RemovalReason.DISCARDED);
         }
@@ -136,6 +203,14 @@ public class CustomNautilus extends Nautilus {
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
             this.setNoGravity(true);
 
+            if (speedReducedForAI) {
+                var movAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+                if (movAttr != null && baseMovementSpeed > 0) {
+                    movAttr.setBaseValue(baseMovementSpeed);
+                }
+                speedReducedForAI = false;
+            }
+
             this.previousYRot = this.getYRot();
 
             this.setYRot(player.getYRot());
@@ -156,7 +231,11 @@ public class CustomNautilus extends Nautilus {
 
             this.needsSync = true;
         } else {
-            this.setNoGravity(false);
+            var movAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (movAttr != null && baseMovementSpeed > 0 && !speedReducedForAI) {
+                movAttr.setBaseValue(baseMovementSpeed / 4.0);
+                speedReducedForAI = true;
+            }
         }
     }
 
@@ -423,5 +502,9 @@ public class CustomNautilus extends Nautilus {
 
     public @NotNull org.bukkit.entity.Nautilus getBukkitNautilus() {
         return (org.bukkit.entity.Nautilus) getBukkitEntity();
+    }
+
+    public @NotNull org.bukkit.entity.Player getBukkitOwner(){
+        return owner;
     }
 }

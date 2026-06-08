@@ -2,7 +2,6 @@ package tcc.gamers
 
 import ch.njol.skript.Skript
 import io.lumine.mythic.bukkit.MythicBukkit
-import jdk.jfr.DataAmount
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.TabCompleter
@@ -12,7 +11,7 @@ import org.skriptlang.skript.addon.SkriptAddon
 import org.spartan.api.SpartanApi
 import org.spartan.internal.facade.SpartanApiImpl
 import tcc.gamers.ai.event.skript.SkriptEventRegistry
-import tcc.gamers.ai.item.dragon.DragonHornListener
+import tcc.gamers.item.dragon.DragonHornListener
 import tcc.gamers.config.ConfigManager
 import tcc.gamers.config.HorseConfig
 import tcc.gamers.config.command.ConfigCommand
@@ -31,7 +30,6 @@ import tcc.gamers.tutorials.tutorial.command.PathCommand
 import tcc.gamers.tutorials.tutorial.command.TutorialCommand
 import tcc.gamers.tutorials.tutorial.manager.PathManager
 import tcc.gamers.tutorials.tutorial.session.SessionManager
-import tcc.gamers.util.DataDrivenLoader
 import tcc.gamers.util.StorageFolder
 import tcc.gamers.util.hasTutorialTag
 import java.io.File

@@ -8,7 +8,7 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import tcc.gamers.TCCPlugin
-import tcc.gamers.ai.item.dragon.DragonHornHelper
+import tcc.gamers.item.dragon.DragonHornHelper
 import tcc.gamers.nms.nautilus.CustomNautilus
 import tcc.gamers.util.sendComponent
 

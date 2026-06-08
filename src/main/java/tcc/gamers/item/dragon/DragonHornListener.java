@@ -1,4 +1,4 @@
-package tcc.gamers.ai.item.dragon;
+package tcc.gamers.item.dragon;
 
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
