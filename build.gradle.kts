@@ -36,6 +36,7 @@ dependencies {
     compileOnly("io.github.toxicity188:bettermodel-bukkit-api:3.0.1")
     compileOnly("io.lumine:Mythic-Dist:5.12.1")
     compileOnly("com.github.SkriptLang:Skript:$skriptVersion")
+    compileOnly("net.luckperms:api:5.4")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")

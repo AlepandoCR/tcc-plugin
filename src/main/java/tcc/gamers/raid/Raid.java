@@ -4,6 +4,7 @@ import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.bossbar.BossBarViewer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.luckperms.api.LuckPermsProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -200,53 +201,41 @@ public class Raid extends SupervisedArea {
     }
 
     private void congratulatePlayers() {
-        participants
-                .stream()
-                .map(Bukkit::getPlayer)
-                .filter(Objects::nonNull)
-                .forEach(player -> {
-                    player.sendMessage(Component.text("Has derrotado la raid!").color(NamedTextColor.GOLD));
+        var karmaGain = Math.max(raidDto.getRaidMobs().size() / 2, 1);
 
-                    var karmaGain = Math.max(raidDto.getRaidMobs().size() / 4, 1);
+        int cloudGain  = 0;
+        int treeGain = 0;
 
-                    new RaidCompleteEvent(this, player, karmaGain).callEvent();
+        for (UUID uuid : participants) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player == null) continue;
 
-                    if(player.hasPermission("faccion.nube")){
-                        var karma = plugin.configManager
-                                .getLiveGameDataManager()
-                                .getCloudsKarma() + karmaGain;
+            player.sendMessage(Component.text("Has derrotado la raid!").color(NamedTextColor.GOLD));
+            new RaidCompleteEvent(this, player, karmaGain).callEvent();
+            player.getInventory().addItem(DragonHornHelper.createSoulShard(raidDto.getRaidMobs().size()));
 
-                        plugin.configManager
-                                .getLiveGameDataManager()
-                                .getCloudsKarmaMutable()
-                                .set(
-                                        karma
-                                );
+            var lpUser = LuckPermsProvider.get().getUserManager().getUser(uuid);
+            if (lpUser == null) continue;
 
-                        plugin.configManager.getPersistenceGameDataManager().setCloudKarma(karma);
+            var groups = lpUser.getInheritedGroups(lpUser.getQueryOptions());
+            boolean inNube  = groups.stream().anyMatch(g -> g.getName().equalsIgnoreCase("nube"));
+            boolean inArbol = groups.stream().anyMatch(g -> g.getName().equalsIgnoreCase("arbol"));
 
-                    } else if (player.hasPermission("faccion.arbol")) {
-                        var karma = plugin.configManager
-                                .getLiveGameDataManager()
-                                .getTreeKarma() + karmaGain;
+            if (inNube) {
+                cloudGain += karmaGain;
+            } else if (inArbol) {
+                treeGain += karmaGain;
+            }
+        }
 
-                        var mutable =  plugin.configManager
-                                .getLiveGameDataManager()
-                                .getTreeKarmaMutable();
-
-                        mutable.set(karma);
-
-                        plugin.configManager.getPersistenceGameDataManager().setTreeKarma(karma);
-                    }
-
-                    player
-                            .getInventory()
-                            .addItem(
-                                    DragonHornHelper.createSoulShard(raidDto.getRaidMobs().size()
-                                    )
-                            ); // give souls for each mob
-                }
-        );
+        if (cloudGain > 0) {
+            var mutable = plugin.configManager.getLiveGameDataManager().getCloudsKarmaMutable();
+            mutable.set(mutable.get() + cloudGain);
+        }
+        if (treeGain > 0) {
+            var mutable = plugin.configManager.getLiveGameDataManager().getTreeKarmaMutable();
+            mutable.set(mutable.get() + treeGain);
+        }
     }
 
     private void loadRaidMobs(@NotNull TCCPlugin plugin, @NotNull List<String> raidMobsStrings, @NotNull Collection<RaidMobDto> raidMobsDto, @NotNull Map<String, Integer> mobsWithAmount) {
