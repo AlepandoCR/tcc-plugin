@@ -116,7 +116,12 @@ public class Raid extends SupervisedArea {
             this.start();
         }
 
-        getEntitiesInAreaOfType(Player.class).forEach(bossBar::addViewer);
+        this.getEntitiesInAreaOfType(Player.class).forEach(player ->{
+            if(!participants.contains(player.getUniqueId())){
+                participants.add(player.getUniqueId()); // add all player already inside
+            }
+            bossBar.addViewer(player);
+        });
         this.onTick = true;
     }
 
@@ -162,11 +167,6 @@ public class Raid extends SupervisedArea {
     protected void onStart() {
         bossBar.addFlag(BossBar.Flag.CREATE_WORLD_FOG);
         bossBar.addFlag(BossBar.Flag.DARKEN_SCREEN);
-        this.getEntitiesInAreaOfType(Player.class).forEach(player ->{
-            if(!participants.contains(player.getUniqueId())){
-                participants.add(player.getUniqueId()); // add all player already inside
-            }
-        });
 
         plugin.raidManager.registerActiveRaid(this);
     }

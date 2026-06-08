@@ -93,9 +93,6 @@ public class RaidLobbyTask extends BukkitRunnable {
         players.forEach(player -> player.sendActionBar(actionBarMessage));
     }
 
-    /**
-     * Helper para reproducir un sonido a todos los jugadores en la lista
-     */
     private void playSoundToAll(@NotNull Collection<Player> players, Sound sound, float volume, float pitch) {
         players.forEach(player -> player.playSound(player.getLocation(), sound, volume, pitch));
     }
