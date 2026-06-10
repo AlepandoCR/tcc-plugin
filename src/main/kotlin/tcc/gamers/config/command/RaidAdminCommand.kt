@@ -6,7 +6,9 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
+import org.bukkit.entity.Player
 import tcc.gamers.TCCPlugin
+import tcc.gamers.util.ChestBuilder
 import tcc.gamers.util.PermissionNode
 import tcc.gamers.util.hasPermission
 import tcc.gamers.util.sendComponent
@@ -59,6 +61,23 @@ class RaidAdminCommand(
             return true
         }
 
+        // maps — da todos los mapas de todas las raids empacados en cofres recursivos
+        if (action == "maps") {
+            if (sender !is Player) {
+                sender.sendComponent(Component.text("Only players can receive maps.").color(NamedTextColor.RED))
+                return true
+            }
+            val maps = plugin.raidManager.maps
+            if (maps.isEmpty()) {
+                sender.sendComponent(Component.text("No raid templates with maps available.").color(NamedTextColor.YELLOW))
+                return true
+            }
+            val chest = ChestBuilder.pack(maps)
+            sender.inventory.addItem(chest)
+            sender.sendComponent(Component.text("You received a chest with all ${maps.size} raid maps.").color(NamedTextColor.GREEN))
+            return true
+        }
+
         if (args.size < 2) {
             sender.sendComponent(Component.text("Usage: /raidadmin $action <raid-id>").color(NamedTextColor.YELLOW))
             return true
@@ -98,8 +117,22 @@ class RaidAdminCommand(
                 }
                 sender.sendComponent(Component.text("Triggered ${activeRaids.size} active instance(s) of '$raidId'.").color(NamedTextColor.GREEN))
             }
+            "map" -> {
+                if (sender !is Player) {
+                    sender.sendComponent(Component.text("Only players can receive maps.").color(NamedTextColor.RED))
+                    return true
+                }
+                val template = plugin.raidManager.raidTemplates
+                    .firstOrNull { it.identifier.equals(raidId, ignoreCase = true) }
+                if (template == null) {
+                    sender.sendComponent(Component.text("Raid template '$raidId' not found.").color(NamedTextColor.RED))
+                    return true
+                }
+                sender.inventory.addItem(template.mapRenderer.create())
+                sender.sendComponent(Component.text("You received the map for raid '$raidId'.").color(NamedTextColor.GREEN))
+            }
             else -> {
-                sender.sendComponent(Component.text("Unknown action '$action'. Use start, stop, trigger, startall, or stopall.").color(NamedTextColor.RED))
+                sender.sendComponent(Component.text("Unknown action '$action'. Use start, stop, trigger, map, maps, startall, or stopall.").color(NamedTextColor.RED))
             }
         }
 
@@ -113,14 +146,16 @@ class RaidAdminCommand(
         args: Array<out String>
     ): List<String> {
         return when (args.size) {
-            1 -> listOf("start", "stop", "trigger", "startall", "stopall").filter { it.startsWith(args[0], ignoreCase = true) }
+            1 -> listOf("start", "stop", "trigger", "map", "maps", "startall", "stopall")
+                .filter { it.startsWith(args[0], ignoreCase = true) }
             2 -> {
                 val action = args[0].lowercase()
-                if (action == "startall" || action == "stopall") {
+                if (action == "startall" || action == "stopall" || action == "maps") {
                     emptyList()
                 } else {
-                    val raidIds = plugin.raidManager.raidTemplates.map { it.identifier }
-                    raidIds.filter { it.startsWith(args[1], ignoreCase = true) }
+                    plugin.raidManager.raidTemplates
+                        .map { it.identifier }
+                        .filter { it.startsWith(args[1], ignoreCase = true) }
                 }
             }
             else -> emptyList()

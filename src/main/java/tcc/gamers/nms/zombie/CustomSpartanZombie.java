@@ -179,7 +179,7 @@ public class CustomSpartanZombie<SpartanModelConfigType extends SpartanModelConf
     }
 
     private void loadSpartanModel(SpartanModel<SpartanModelConfigType> spartanModel) {
-        var modelManager = new SpartanModelManager(spartanModel);
+        var modelManager = new SpartanModelManager(spartanModel, "/zombiemodel.spartan");
         try {
             modelManager.loadModel();
         } catch (SpartanPersistenceException e) {

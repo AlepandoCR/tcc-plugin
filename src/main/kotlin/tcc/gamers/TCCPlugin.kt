@@ -11,6 +11,7 @@ import org.skriptlang.skript.addon.SkriptAddon
 import org.spartan.api.SpartanApi
 import org.spartan.internal.facade.SpartanApiImpl
 import tcc.gamers.ai.event.skript.SkriptEventRegistry
+import tcc.gamers.ai.event.vault.VaultFixListener
 import tcc.gamers.item.dragon.DragonHornListener
 import tcc.gamers.config.ConfigManager
 import tcc.gamers.config.HorseConfig
@@ -73,7 +74,8 @@ class TCCPlugin : JavaPlugin() {
 
         registerListeners(
             TutorialStarter(this),
-            DragonHornListener(this)
+            DragonHornListener(this),
+            VaultFixListener(this)
         )
 
         SkriptEventRegistry.registerAll(skriptAddon)

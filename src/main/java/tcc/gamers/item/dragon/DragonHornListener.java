@@ -16,7 +16,7 @@ import org.bukkit.inventory.meta.MusicInstrumentMeta;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
-import tcc.gamers.nms.nautilus.CustomNautilus;
+import tcc.gamers.nms.nautilus.DragonMountNautilus;
 
 public class DragonHornListener implements Listener {
 
@@ -70,7 +70,7 @@ public class DragonHornListener implements Listener {
 
                             player.playSound(spawnLoc,Sound.ENTITY_GENERIC_EXPLODE,1.0f,1.0f);
 
-                            new CustomNautilus(player.getWorld(), plugin, player).spawn(spawnLoc);
+                            new DragonMountNautilus(player.getWorld(), plugin, player).spawn(spawnLoc);
                         }
                     }
                 }
@@ -124,7 +124,7 @@ public class DragonHornListener implements Listener {
         ItemStack newCursor = cursorItem.clone();
         newCursor.setAmount(0);
 
-        Bukkit.getScheduler().runTask(plugin, () -> {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
             var inv = event.getClickedInventory();
             if (inv == null) return;
 

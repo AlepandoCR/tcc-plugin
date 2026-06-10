@@ -175,7 +175,7 @@ public class CustomSpartanHorse<SpartanModelConfigType extends SpartanModelConfi
 
             var modelTickBehavior = new SpartanBrainTickerBehaviorControl<>(
                     spartanModel,
-                    1, // every 2 ticks
+                    1,
                     100,
                     modelSavePath
             );
@@ -260,7 +260,7 @@ public class CustomSpartanHorse<SpartanModelConfigType extends SpartanModelConfi
 
     private static <SpartanModelConfigType extends SpartanModelConfig> void loadTaxiModel(SpartanModel<SpartanModelConfigType> spartanModel) {
         // Load trained model if it exists
-        var modelManager = new SpartanModelManager(spartanModel);
+        var modelManager = new SpartanModelManager(spartanModel, "/horsemodel.spartan");
         try {
             modelManager.loadModel();
         } catch (SpartanPersistenceException e) {

@@ -5,18 +5,17 @@ import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
-import tcc.gamers.nms.nautilus.CustomNautilus;
+import tcc.gamers.nms.nautilus.DragonMountNautilus;
 import tcc.gamers.nms.nautilus.NautilusAnimationManager;
 
 import java.util.Comparator;
 import java.util.Set;
 
-public class DragonAttackBehaviorControl<E extends CustomNautilus> implements BehaviorControl<E> {
+public class DragonAttackBehaviorControl<E extends DragonMountNautilus> implements BehaviorControl<E> {
 
     private final TCCPlugin plugin;
     private @NotNull Behavior.Status status = Behavior.Status.STOPPED;
@@ -58,7 +57,7 @@ public class DragonAttackBehaviorControl<E extends CustomNautilus> implements Be
 
         var bukkitEntity = e.getBukkitNautilus();
 
-        var nearHostile = bukkitEntity.getLocation().getNearbyEntitiesByType(Monster.class, CustomNautilus.DRAGON_ATTACK_DISTANCE);
+        var nearHostile = bukkitEntity.getLocation().getNearbyEntitiesByType(Monster.class, DragonMountNautilus.DRAGON_ATTACK_DISTANCE);
         if (nearHostile.isEmpty()) {
             status = Behavior.Status.STOPPED;
             return;

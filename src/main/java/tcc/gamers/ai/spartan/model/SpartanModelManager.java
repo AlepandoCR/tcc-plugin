@@ -13,19 +13,20 @@ import java.nio.file.Paths;
  */
 public class SpartanModelManager {
 
-    private static final String MODEL_PATH = StorageFolder.SPARTAN_MODEL.getFolderName() + "/horsemodel.spartan";
+    private final String modelPath;
 
     private final SpartanModel<?> model;
 
-    public SpartanModelManager(@NotNull SpartanModel<?> model) {
+    public SpartanModelManager(@NotNull SpartanModel<?> model, @NotNull String path) {
         this.model = model;
+        modelPath = StorageFolder.SPARTAN_MODEL.getFolderName() + path;
     }
 
     /**
      * Save the model to the default horse model path.
      */
     public void saveModel() {
-        saveModel(Paths.get(MODEL_PATH));
+        saveModel(Paths.get(modelPath));
     }
 
     /**
@@ -41,7 +42,7 @@ public class SpartanModelManager {
      * Load the model from the default horse model path.
      */
     public void loadModel() {
-        Path path = Paths.get(MODEL_PATH);
+        Path path = Paths.get(modelPath);
         if(path.toFile().exists()) {
             loadModel(path);
         }
@@ -61,8 +62,8 @@ public class SpartanModelManager {
      *
      * @return the default model path
      */
-    public static String getDefaultModelPath() {
-        return MODEL_PATH;
+    public @NotNull String getDefaultModelPath() {
+        return modelPath;
     }
 
     /**

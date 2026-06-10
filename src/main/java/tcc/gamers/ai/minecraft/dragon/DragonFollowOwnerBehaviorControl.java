@@ -6,12 +6,13 @@ import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
-import tcc.gamers.nms.nautilus.CustomNautilus;
+import tcc.gamers.nms.nautilus.AbstractDragonNautilus;
+import tcc.gamers.nms.nautilus.DragonMountNautilus;
 import tcc.gamers.nms.nautilus.NautilusAnimationManager;
 
 import java.util.Set;
 
-public class DragonFollowOwnerBehaviorControl<E extends CustomNautilus> implements BehaviorControl<E> {
+public class DragonFollowOwnerBehaviorControl<E extends DragonMountNautilus> implements BehaviorControl<E> {
 
     private final TCCPlugin plugin;
 
@@ -52,7 +53,7 @@ public class DragonFollowOwnerBehaviorControl<E extends CustomNautilus> implemen
 
         var owner = e.getBukkitOwner();
 
-        if(e.getBukkitNautilus().getLocation().distance(owner.getLocation()) < CustomNautilus.OWNER_FOLLOW_DISTANCE ){
+        if(e.getBukkitNautilus().getLocation().distance(owner.getLocation()) < DragonMountNautilus.OWNER_FOLLOW_DISTANCE ){
             e.getNavigation().stop(); // close enough, stop nav
             e.getAnimationManager().play(NautilusAnimationManager.Animation.FLY_IDLE);
             return;
@@ -62,7 +63,7 @@ public class DragonFollowOwnerBehaviorControl<E extends CustomNautilus> implemen
         var y = owner.getY();
         var z = owner.getZ();
 
-        e.getNavigation().moveTo(x,y,z, CustomNautilus.OWNER_FOLLOW_DISTANCE,1.2); // follow owner
+        e.getNavigation().moveTo(x,y,z, DragonMountNautilus.OWNER_FOLLOW_DISTANCE,1.2); // follow owner
         e.getAnimationManager().play(NautilusAnimationManager.Animation.FLY_WALK);
     }
 

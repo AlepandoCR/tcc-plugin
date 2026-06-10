@@ -7,10 +7,13 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.luckperms.api.LuckPermsProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
+import org.jetbrains.annotations.Unmodifiable;
 import tcc.gamers.TCCPlugin;
 import tcc.gamers.ai.event.RaidCompleteEvent;
 import tcc.gamers.ai.event.RaidPlayerJoinEvent;
@@ -23,6 +26,7 @@ import tcc.gamers.data.RaidMobDto;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 public class Raid extends SupervisedArea {
 
@@ -33,6 +37,7 @@ public class Raid extends SupervisedArea {
     private final @NotNull Location spawnLocation;
     private final @NotNull RaidDto raidDto;
     private final @NotNull Collection<UUID> participants;
+    private final @NotNull RaidMapRenderer mapRenderer;
 
     private RaidLobbyTask lobbyTask;
 
@@ -59,6 +64,11 @@ public class Raid extends SupervisedArea {
         this.raidId = UUID.randomUUID();
         this.raidDto = raidDto;
         participants = new ArrayList<>();
+        mapRenderer = new RaidMapRenderer(this);
+    }
+
+    public @NotNull RaidMapRenderer getMapRenderer() {
+        return mapRenderer;
     }
 
     public long getTickFrequency() { return raidDto.getTickFrequency(); }
@@ -101,6 +111,28 @@ public class Raid extends SupervisedArea {
         new RaidPlayerLeaveEvent(this, player).callEvent();
     }
 
+    @NotNull
+    private @Unmodifiable List<RaidMob> findEscapedMobs() {
+        var entitiesInArea = new HashSet<>(getEntitiesInAreaOfType(Entity.class));
+
+        return raidMobs.stream()
+                .filter(RaidMob::isAlive)
+                .filter(mob -> mob.getBukkitEntity()
+                        .map(entity -> !entitiesInArea.contains(entity))
+                        .orElse(false) // not spawned
+                )
+                .toList();
+    }
+
+    //tp fugitives
+    private void teleportEscapedMobsToSpawn() {
+        findEscapedMobs().forEach(mob ->
+                mob.getBukkitEntity().ifPresent(entity ->
+                        entity.teleport(spawnLocation)
+                )
+        );
+    }
+
     public void spawnMobs() {
         raidMobs.stream().filter(RaidMob::notSpawned).forEach(mob -> {
             double offsetX = ThreadLocalRandom.current().nextDouble(-2.5, 2.5);
@@ -133,6 +165,7 @@ public class Raid extends SupervisedArea {
     @Override
     protected void onTick() {
         tickEmotionControllers();
+        teleportEscapedMobsToSpawn();
 
         float targetProgress = getClampedProgress();
         if (Math.abs(this.bossBar.progress() - targetProgress) > 0.01f) {

@@ -1,5 +1,6 @@
 package tcc.gamers.raid;
 
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
 import tcc.gamers.data.AreaDto;
@@ -68,6 +69,15 @@ public class RaidManager {
         if (!activeRaids.contains(raid)) {
             activeRaids.add(raid);
         }
+    }
+
+    public @NotNull List<ItemStack> getMaps(){
+        return raidTemplates
+                .stream()
+                .map(raid -> raid
+                        .getMapRenderer()
+                        .create()
+                ).toList();
     }
 
     public void unregisterActiveRaid(@NotNull Raid raid) {

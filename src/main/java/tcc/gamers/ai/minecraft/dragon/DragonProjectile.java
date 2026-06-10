@@ -13,7 +13,7 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
-import tcc.gamers.nms.nautilus.CustomNautilus;
+import tcc.gamers.nms.nautilus.DragonMountNautilus;
 import tcc.gamers.tutorials.model.Model;
 
 import java.util.Collection;
@@ -21,7 +21,7 @@ import java.util.Collection;
 public class DragonProjectile extends BukkitRunnable {
 
     private final TCCPlugin plugin;
-    private final CustomNautilus shooter;
+    private final DragonMountNautilus shooter;
     private final Model<ItemDisplay> model;
     
     private final Location currentLocation;
@@ -32,7 +32,7 @@ public class DragonProjectile extends BukkitRunnable {
 
     public DragonProjectile(
             @NotNull TCCPlugin plugin,
-            @NotNull CustomNautilus shooter,
+            @NotNull DragonMountNautilus shooter,
             @NotNull Location startLocation,
             @NotNull LivingEntity target,
             double speed,

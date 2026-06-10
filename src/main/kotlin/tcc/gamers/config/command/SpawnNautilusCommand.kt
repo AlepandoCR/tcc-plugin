@@ -9,7 +9,7 @@ import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import tcc.gamers.TCCPlugin
 import tcc.gamers.item.dragon.DragonHornHelper
-import tcc.gamers.nms.nautilus.CustomNautilus
+import tcc.gamers.nms.nautilus.DragonMountNautilus
 import tcc.gamers.util.sendComponent
 
 class SpawnNautilusCommand(private val plugin: TCCPlugin) : CommandExecutor, TabCompleter {
@@ -25,7 +25,7 @@ class SpawnNautilusCommand(private val plugin: TCCPlugin) : CommandExecutor, Tab
         when (args[0].lowercase()) {
             "spawn" -> {
                 try {
-                    val customNautilus = CustomNautilus(sender.world, plugin, sender)
+                    val customNautilus = DragonMountNautilus(sender.world, plugin, sender)
                     customNautilus.spawn(sender.location)
                     sender.sendComponent(Component.text("Nautilus invocado.").color(NamedTextColor.GREEN))
                 } catch (e: Exception) {
