@@ -87,6 +87,8 @@ public abstract class AbstractDragonNautilus<E extends AbstractNautilus> extends
     private double baseMovementSpeed  = -1.0;
     private boolean speedReducedForAI  = false;
 
+    private boolean isAutonomous = false;
+
     private @Nullable Model<org.bukkit.entity.Nautilus> model;
 
     protected AbstractDragonNautilus(@NotNull World world, @NotNull TCCPlugin plugin) {
@@ -105,6 +107,17 @@ public abstract class AbstractDragonNautilus<E extends AbstractNautilus> extends
         this.moveControl = new FlyingMoveControl(this, 20, true);
     }
 
+    public void setIsAutonomous(boolean autonomous){
+        this.isAutonomous = autonomous;
+    }
+
+    public boolean isAutonomous(){
+        return this.isAutonomous;
+    }
+
+    public @NotNull Location getLocation(){
+        return getBukkitNautilus().getLocation();
+    }
 
     /**
      * Adds the entity to the world, attaches the geo model, and applies the
@@ -125,7 +138,11 @@ public abstract class AbstractDragonNautilus<E extends AbstractNautilus> extends
                 TCCNameSpacedKeys.FLYING_NAUTILUS.getNamespacedKey(),
                 PersistentDataType.BYTE, (byte) 1);
         bukkit.teleport(location);
+
+        onSpawn(location);
     }
+
+    abstract void onSpawn(@NotNull Location spawnLocation);
 
 
 
@@ -191,7 +208,7 @@ public abstract class AbstractDragonNautilus<E extends AbstractNautilus> extends
         this.resetFallDistance();
         this.setAirSupply(this.getMaxAirSupply());
 
-        if (this.isVehicle()) {
+        if (this.isVehicle() || isAutonomous) {
             this.setNoGravity(true);
             restoreSpeedIfNeeded();
             capturePreviousRotation();

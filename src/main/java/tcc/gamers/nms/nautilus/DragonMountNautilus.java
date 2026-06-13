@@ -7,6 +7,7 @@ import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.phys.Vec3;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
@@ -58,6 +59,11 @@ public class DragonMountNautilus extends AbstractDragonNautilus<DragonMountNauti
         this.dragonUITask          = new DragonUITask(plugin, this, owner);
     }
 
+
+    @Override
+    void onSpawn(@NotNull Location spawnLocation) {
+        // nothing
+    }
 
     @Override
     protected void registerBrainActivities(@NotNull Brain<DragonMountNautilus> brain) {

@@ -29,6 +29,10 @@ commands:
     description: "test spawn for flying nautilus"
     usage: /nauti
     permission: op
+  dragontrain:
+    description: "trains tragons"
+    usage: /dragontrin <amount>
+    permission: op
 
 
 permissions:

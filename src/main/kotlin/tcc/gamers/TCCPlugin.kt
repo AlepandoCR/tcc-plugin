@@ -16,6 +16,7 @@ import tcc.gamers.item.dragon.DragonHornListener
 import tcc.gamers.config.ConfigManager
 import tcc.gamers.config.HorseConfig
 import tcc.gamers.config.command.ConfigCommand
+import tcc.gamers.config.command.DragonTrainingCommand
 import tcc.gamers.config.command.RaidAdminCommand
 import tcc.gamers.config.command.SpawnNautilusCommand
 import tcc.gamers.data.DataDrivenManager
@@ -89,6 +90,7 @@ class TCCPlugin : JavaPlugin() {
         val configCommand = ConfigCommand(this)
         val raidCommand = RaidAdminCommand(this)
         val nautilusCommand = SpawnNautilusCommand(this)
+        val dragonTrainCommand = DragonTrainingCommand(this)
 
         registerCommand("tutorials", TutorialCommand(this))
         registerCommand("path", pathCommand, pathCommand)
@@ -96,6 +98,7 @@ class TCCPlugin : JavaPlugin() {
         registerCommand("tccconfig", configCommand, configCommand)
         registerCommand("raids", raidCommand, raidCommand)
         registerCommand("nauti", nautilusCommand, nautilusCommand)
+        registerCommand("dragontrain", dragonTrainCommand, dragonTrainCommand)
     }
 
     private fun startManagers() {

@@ -1,192 +1,125 @@
 package tcc.gamers.nms.nautilus;
 
-import com.google.common.collect.ImmutableList;
-import com.mojang.datafixers.util.Pair;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
-import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.spartan.api.engine.config.RecurrentSoftActorCriticConfig;
-import org.spartan.api.engine.model.RecurrentSoftActorCriticModel;
-import org.spartan.api.exception.SpartanNativeException;
 import tcc.gamers.TCCPlugin;
 import tcc.gamers.ai.controller.DragonLookController;
-import tcc.gamers.ai.minecraft.SpartanBrainTickerBehaviorControl;
-import tcc.gamers.util.StorageFolder;
+import tcc.gamers.ai.queue.DragonQueueManager;
 
-import java.nio.file.Paths;
-import java.util.Set;
+import java.util.Optional;
 
 
+/**
+ * An autonomous dragon entity steered by the Shared Brain architecture.
+ */
 public class AutonomousDragonNautilus extends AbstractDragonNautilus<AutonomousDragonNautilus> {
+
+
+    private final @NotNull DragonQueueManager dragonQueueManager;
 
     private final @NotNull DragonLookController controller;
 
-    private @Nullable RecurrentSoftActorCriticModel model;
-
-    private @NotNull Location targetLocation;
+    private @Nullable Location targetLocation;
 
     private boolean started = false;
 
-    protected AutonomousDragonNautilus(@NotNull World world, @NotNull TCCPlugin plugin) {
+    /**
+     * @param world             The Bukkit world to spawn in.
+     * @param plugin            Plugin instance for API access.
+     * @param dragonQueueManager The already-initialized shared brain.
+     *                           Must not be null; must have had
+     *                           {@link DragonQueueManager#initialize()} called before
+     *                           this entity begins ticking.
+     */
+    public AutonomousDragonNautilus(
+            @NotNull World world,
+            @NotNull TCCPlugin plugin,
+            @NotNull DragonQueueManager dragonQueueManager
+    ) {
         super(world, plugin);
-        this.controller = new DragonLookController(this);
-        this.targetLocation = this.getBukkitNautilus().getLocation(); //start self as target
+        this.dragonQueueManager = dragonQueueManager;
+        this.setIsAutonomous(true);
+        this.controller = new DragonLookController(this, dragonQueueManager);
+    }
+
+    public @NotNull TCCPlugin getPlugin(){
+        return plugin;
+    }
+
+    @Override
+    void onSpawn(@NotNull Location spawnLocation) {
+        this.targetLocation = this.getBukkitNautilus().getLocation(); // start self as target
     }
 
     @Override
     void registerBrainActivities(@NotNull Brain<AutonomousDragonNautilus> brain) {
-
-        var modelSavePath = Paths.get(
-                        plugin.getDataFolder().getAbsolutePath()
-                )
-                .resolve(
-                        StorageFolder.SPARTAN_MODEL.getFolderName()
-                )
-                .resolve("dragon-model.spartan");
-
-        try {
-            this.model = buildModel();
-            brain.addActivity(
-                    Activity.CORE,
-                    ImmutableList.of(
-                            Pair.of(1, new SpartanBrainTickerBehaviorControl<>(model, 1, 200, modelSavePath))
-                    ),
-                    Set.of(),
-                    Set.of()
-             );
-        }catch(SpartanNativeException exception){
-            plugin.getLogger().warning("Spartan Native Exception: " + exception.getMessage());
-        }
     }
 
     @Override
     void registerExtraGoals(@NotNull GoalSelector goalSelector) {
-
+        // No goal-selector AI for this entity type
     }
 
-    public void start(){
+
+    public void start() {
         this.started = true;
     }
 
-    public void stop(){
+    /** Stops the dragon from submitting state requests. In-flight requests already
+     *  in the queue will still be processed and their callbacks will fire, but since
+     *  the dragon is stopped the resulting applyCalculatedActions() call is guarded
+     *  by the hasTarget() check inside the controller. */
+    public void stop() {
         this.started = false;
     }
 
-    public void setTargetLocation(@NotNull Location location){
+    public void setTargetLocation(@NotNull Location location) {
         this.targetLocation = location;
     }
 
-    public @NotNull Location getLocationTarget(){
-        return targetLocation;
+    public @NotNull Optional<Location> getLocationTarget() {
+        return Optional.ofNullable(targetLocation);
     }
 
+    /**
+     * Returns the 3D vector from this entity's current position to the target location.
+     * Called by {@link DragonLookController} every tick to compute all directional
+     * context values (alignment, yaw error, pitch error, target distance).
+     *
+     * @throws java.util.NoSuchElementException if called when no target is set.
+     *         Callers must guard with {@link #hasTarget()} first.
+     */
     public @NotNull Vec3 getTargetOffset() {
-        Vec3 targetVec = new Vec3(targetLocation.getX(), targetLocation.getY(), targetLocation.getZ());
+        var location = getLocationTarget().orElseThrow();
+        Vec3 targetVec = new Vec3(
+                location.getX(),
+                location.getY(),
+                location.getZ()
+        );
         return targetVec.subtract(this.position());
     }
 
-    public boolean hasArrived(){
+    /** @return {@code true} if the dragon is within the arrival radius of the target. */
+    public boolean hasArrived() {
         return controller.hasReachedTarget();
     }
 
+    /**
+     * @return {@code true} if a target is set and it differs from the entity's
+     *         current location. Guards all context sampling in the controller.
+     */
     public boolean hasTarget() {
+        if (targetLocation == null) return false;
         return !targetLocation.equals(this.getBukkitNautilus().getLocation());
     }
 
     @Override
     protected void tickController() {
-        if(started) controller.tick();
-    }
-
-    @Contract(" -> new")
-    private @NotNull RecurrentSoftActorCriticModel buildModel(){
-        var spartanContext = plugin.getSpartanApi().createContext("dragon_context");
-        var contextElements = this.controller.buildContextElements();
-        contextElements.forEach(
-                element -> spartanContext.addElement(
-                        element,
-                        contextElements.indexOf(
-                                element
-                        )
-                )
-        );
-
-        spartanContext.update();
-
-        var actionManager = plugin.getSpartanApi().createActionManager();
-
-        this.controller.getActions().forEach(actionManager::registerAction);
-
-        return (RecurrentSoftActorCriticModel)
-                plugin.getSpartanApi()
-                        .createModel(
-                                "spartan-dragon-model-for-entity-" + this.getStringUUID(),
-                                createDragonFlightConfig(),
-                                spartanContext,
-                                actionManager
-                        );
-    }
-
-    /**
-     * Constructs the RSAC configuration optimized for high-speed, continuous 3D spatial navigation.
-     * The model is tuned to prioritize long-term trajectory alignment (Point A to Point B)
-     * over immediate, short-sighted movements.
-     */
-    @NotNull
-    @Contract(" -> new")
-    private RecurrentSoftActorCriticConfig createDragonFlightConfig() {
-        return RecurrentSoftActorCriticConfig.builder()
-                // core learning rates
-                // Keeping learning rates standard for SAC. Too high will cause catastrophic
-                // forgetting in continuous spaces; too low will make convergence painfully slow
-                .learningRate(3.0E-4)
-                .policyNetworkLearningRate(3.0E-4)
-                .firstCriticLearningRate(3.0E-4)
-                .secondCriticLearningRate(3.0E-4)
-
-                // temporal and recurrency settings
-                // gamma 0.99 ensures the AI values the long-term reward of reaching the target
-                .gamma(0.99)
-                // BPTT Depth set to 8. This allows the recurrent network to backpropagate through
-                // the last 8 ticks, giving the AI a physical "sense" of its own momentum and acceleration.
-                .truncatedBPTTDepth(8)
-                .hiddenStateSize(128)
-                .recurrentLayerDepth(1)
-                .recurrentInputFeatureCount(64)
-
-                // network arch
-                // 256x2 standard
-                .actorHiddenLayerCount(2)
-                .actorHiddenLayerNeuronCount(256)
-                .criticHiddenLayerCount(2)
-                .criticHiddenLayerNeuronCount(256)
-
-                // entropy and exploration!
-                // target entropy typically equals -dim(A), we have 2 actions (yaw, pitch)
-                .targetEntropy(-2.0)
-                // alpha LR allows the model to auto-tune its entropy (exploration rate)
-                // it starts exploring aggressively and stabilizes as it learns the flight path ideally
-                .alphaLearningRate(1.0E-4)
-                .entropyTemperatureAlpha(0.2)
-
-                // action bounding
-                // extremely important: Squashes network outputs strictly between [-1.0, 1.0] using Tanh
-                .squashActionsWithTanh(1.0)
-
-                // Polyak averaging for stable target network updates
-                .targetSmoothingCoefficient(0.005)
-
-                // buffer and memory
-                .remorseTraceBufferCapacity(2000)
-                .remorseMinimumSimilarityThreshold(0.75)
-
-                .isTraining(true) // always training - Spartan signature
-                .build();
+        if (started) controller.tick();
     }
 }

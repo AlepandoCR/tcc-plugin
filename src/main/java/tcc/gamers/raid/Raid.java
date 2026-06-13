@@ -234,18 +234,22 @@ public class Raid extends SupervisedArea {
     }
 
     private void congratulatePlayers() {
-        var karmaGain = Math.max(raidDto.getRaidMobs().size() / 2, 1);
+
+        var dtoMobs = sumList(raidDto.getRaidMobsAmounts());
+
+        var karmaGain = Math.max(dtoMobs / 2, 1);
 
         int cloudGain  = 0;
         int treeGain = 0;
 
         for (UUID uuid : participants) {
-            Player player = Bukkit.getPlayer(uuid);
+            Player player = plugin.getServer().getPlayer(uuid);
+
             if (player == null) continue;
 
             player.sendMessage(Component.text("Has derrotado la raid!").color(NamedTextColor.GOLD));
             new RaidCompleteEvent(this, player, karmaGain).callEvent();
-            player.getInventory().addItem(DragonHornHelper.createSoulShard(raidDto.getRaidMobs().size()));
+            player.getInventory().addItem(DragonHornHelper.createSoulShard(dtoMobs));
 
             var lpUser = LuckPermsProvider.get().getUserManager().getUser(uuid);
             if (lpUser == null) continue;
@@ -269,6 +273,15 @@ public class Raid extends SupervisedArea {
             var mutable = plugin.configManager.getLiveGameDataManager().getTreeKarmaMutable();
             mutable.set(mutable.get() + treeGain);
         }
+    }
+
+    @Contract(pure = true)
+    private int sumList(@NotNull int[] list){
+        var sum = 0;
+        for (int num : list) {
+            sum += num;
+        }
+        return sum;
     }
 
     private void loadRaidMobs(@NotNull TCCPlugin plugin, @NotNull List<String> raidMobsStrings, @NotNull Collection<RaidMobDto> raidMobsDto, @NotNull Map<String, Integer> mobsWithAmount) {
