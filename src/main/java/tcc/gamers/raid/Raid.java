@@ -237,7 +237,7 @@ public class Raid extends SupervisedArea {
 
         var dtoMobs = sumList(raidDto.getRaidMobsAmounts());
 
-        var karmaGain = Math.max(dtoMobs / 2, 1);
+        var karmaGain = Math.max(dtoMobs / 3, 1);
 
         int cloudGain  = 0;
         int treeGain = 0;
@@ -249,7 +249,7 @@ public class Raid extends SupervisedArea {
 
             player.sendMessage(Component.text("Has derrotado la raid!").color(NamedTextColor.GOLD));
             new RaidCompleteEvent(this, player, karmaGain).callEvent();
-            player.getInventory().addItem(DragonHornHelper.createSoulShard(dtoMobs));
+            player.getInventory().addItem(DragonHornHelper.createSoulShard(karmaGain / 2));
 
             var lpUser = LuckPermsProvider.get().getUserManager().getUser(uuid);
             if (lpUser == null) continue;
