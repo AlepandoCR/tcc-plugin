@@ -28,6 +28,7 @@ public class DataDrivenManager {
     private Map<String, AreaDto> areas = new ConcurrentHashMap<>();
     private Map<String, RaidDto> raids = new ConcurrentHashMap<>();
     private Map<String, RaidMobDto> raidMobs = new ConcurrentHashMap<>();
+    private Map<String, DragonRaceConfig> dragonRaces = new ConcurrentHashMap<>();
 
     /**
      * Constructs a new DataDrivenManager.
@@ -67,6 +68,16 @@ public class DataDrivenManager {
                 (List<RaidMobDto> loadedMobs) -> this.raidMobs = loadedMobs.stream()
                         .collect(Collectors.toConcurrentMap(RaidMobDto::getRaidMobId, mob -> mob)),
                 "RaidMobs"
+        );
+
+        loader.loadDirectory(
+                StorageFolder.DRAGON_RACES,
+                GeneratedDragonRaceConfig.class,
+                DragonRaceConfig::new,
+                (List<DragonRaceConfig> loadedRaces) -> this.dragonRaces = loadedRaces.stream()
+                        .collect(Collectors.toConcurrentMap(DragonRaceConfig::getIdentifier, race -> race)),
+                "DragonRaces"
+
         );
 
         return loader.loadAll();
@@ -127,5 +138,9 @@ public class DataDrivenManager {
      */
     public @NotNull Collection<RaidMobDto> getRaidMobs() {
         return Collections.unmodifiableCollection(raidMobs.values());
+    }
+
+    public Map<String, DragonRaceConfig> getDragonRaceConfigs() {
+        return dragonRaces;
     }
 }

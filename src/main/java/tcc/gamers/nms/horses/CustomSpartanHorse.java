@@ -29,8 +29,8 @@ import tcc.gamers.ai.spartan.context.PointDistanceContextElement;
 import tcc.gamers.ai.spartan.monitor.SpartanActionMonitor;
 import tcc.gamers.ai.spartan.model.SpartanModelManager;
 import tcc.gamers.tutorials.model.Model;
-import tcc.gamers.util.Path;
-import tcc.gamers.util.PathMode;
+import tcc.gamers.util.path.Path;
+import tcc.gamers.util.path.PathMode;
 import tcc.gamers.util.StorageFolder;
 
 import java.nio.file.Paths;

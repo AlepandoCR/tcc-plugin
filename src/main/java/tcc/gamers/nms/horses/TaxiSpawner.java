@@ -12,8 +12,8 @@ import org.jspecify.annotations.Nullable;
 import org.spartan.api.engine.config.CuriosityDrivenRecurrentSoftActorCriticConfig;
 import org.spartan.api.engine.config.SpartanModelConfig;
 import tcc.gamers.TCCPlugin;
-import tcc.gamers.util.Path;
-import tcc.gamers.util.PathMode;
+import tcc.gamers.util.path.Path;
+import tcc.gamers.util.path.PathMode;
 
 /**
  * Centralized taxi spawner to avoid code duplication
@@ -82,7 +82,7 @@ public class TaxiSpawner {
     }
 
     private static @NotNull PathMode selectAutoMode(@NotNull Path path, @NotNull Player player) {
-        var locations = path.getLocations();
+        var locations = path.getLocationList();
         if (locations.isEmpty()) {
             return PathMode.CLOSEST_TO_FURTHEST;
         }

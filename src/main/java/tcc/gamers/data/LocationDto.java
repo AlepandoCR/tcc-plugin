@@ -45,6 +45,10 @@ public abstract class LocationDto {
         return zCoord;
     }
 
+    public @NotNull String getWorldName(){
+        return worldName;
+    }
+
     public @NotNull Optional<Location> toLocation(){
 
         var world = Bukkit.getWorld(worldName);

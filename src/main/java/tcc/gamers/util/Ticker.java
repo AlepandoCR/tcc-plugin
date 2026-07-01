@@ -1,11 +1,10 @@
 package tcc.gamers.util;
 
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public interface Ticker {
+public interface Ticker<TaskType> {
 
     void tick();
 
@@ -13,5 +12,5 @@ public interface Ticker {
 
     void start();
 
-    @NotNull Optional<BukkitTask> getTask();
+    @NotNull Optional<TaskType> getTask();
 }

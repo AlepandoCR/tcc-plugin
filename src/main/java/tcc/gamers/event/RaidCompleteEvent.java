@@ -1,4 +1,4 @@
-package tcc.gamers.ai.event;
+package tcc.gamers.event;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;

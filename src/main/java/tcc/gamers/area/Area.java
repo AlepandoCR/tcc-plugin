@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class Area {
 
-    private final @NotNull Location center;
+    protected final @NotNull Location center;
     private final @NotNull BoundingBox boundingBox;
-    private final @NotNull String identifier;
+    protected final @NotNull String identifier;
 
     private final double xRadius;
     private final double yRadius;

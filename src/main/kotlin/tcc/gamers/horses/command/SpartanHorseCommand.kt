@@ -10,12 +10,12 @@ import org.bukkit.entity.Player
 import tcc.gamers.TCCPlugin
 import tcc.gamers.nms.horses.TaxiSpawner
 import tcc.gamers.tutorials.tutorial.manager.PathManager
-import tcc.gamers.util.Path
-import tcc.gamers.util.PathMode
+import tcc.gamers.util.path.Path
+import tcc.gamers.util.path.PathMode
 import tcc.gamers.util.PermissionNode
 import tcc.gamers.util.hasPermission
 import tcc.gamers.util.sendComponent
-import tcc.gamers.ui.TaxiMenu
+import tcc.gamers.ui.taxi.TaxiMenu
 
 
 class SpartanHorseCommand(
@@ -88,13 +88,13 @@ class SpartanHorseCommand(
             return true
         }
 
-        val points = loadedPath.getLocations()
+        val points = loadedPath.getLocationList()
         if (points.isEmpty()) {
             sender.sendComponent(Component.text("Path '$pathId' has no points.").color(NamedTextColor.RED))
             return true
         }
 
-        val traversalPath = Path(null, pathMode)
+        val traversalPath = Path(sender.location, pathMode)
         points.forEach { traversalPath.addLocation(it.clone()) }
 
         TaxiSpawner.spawnTaxi(plugin, traversalPath, pathMode, sender.location.clone(), sender)

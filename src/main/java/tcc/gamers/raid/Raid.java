@@ -5,19 +5,17 @@ import net.kyori.adventure.bossbar.BossBarViewer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.luckperms.api.LuckPermsProvider;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.meta.trim.ArmorTrim;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.Unmodifiable;
 import tcc.gamers.TCCPlugin;
-import tcc.gamers.ai.event.RaidCompleteEvent;
-import tcc.gamers.ai.event.RaidPlayerJoinEvent;
-import tcc.gamers.ai.event.RaidPlayerLeaveEvent;
+import tcc.gamers.event.RaidCompleteEvent;
+import tcc.gamers.event.RaidPlayerJoinEvent;
+import tcc.gamers.event.RaidPlayerLeaveEvent;
 import tcc.gamers.item.dragon.DragonHornHelper;
 import tcc.gamers.area.Area;
 import tcc.gamers.area.SupervisedArea;
@@ -26,7 +24,6 @@ import tcc.gamers.data.RaidMobDto;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 public class Raid extends SupervisedArea {
 

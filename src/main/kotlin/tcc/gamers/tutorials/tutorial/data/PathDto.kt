@@ -1,8 +1,9 @@
 package tcc.gamers.tutorials.tutorial.data
 
-import tcc.gamers.util.Path
-import tcc.gamers.util.PathMode
+import tcc.gamers.util.path.Path
+import tcc.gamers.util.path.PathMode
 import org.bukkit.Location
+import tcc.gamers.util.path.RacePath
 
 /**
  * DTO to represent a complete Path in YAML/JSON format.
@@ -32,6 +33,15 @@ data class PathDto(
         return path
     }
 
+    fun toRacePath(): RacePath{
+
+        val path = RacePath()
+        for (locDto in locations) {
+            locDto.toLocation()?.let { path.addLocation(it) }
+        }
+        return path
+    }
+
     companion object {
         /**
          * Creates a PathDto from a Path object.
@@ -40,12 +50,23 @@ data class PathDto(
          */
         fun fromPath(id: String, path: Path): PathDto {
             val refLoc = path.getReferenceLocation()?.let { PathLocationDto.fromLocation(it) }
-            val locs = path.getLocations().map { PathLocationDto.fromLocation(it) }.toMutableList()
+            val locs = path.getLocationList().map { PathLocationDto.fromLocation(it) }.toMutableList()
 
             return PathDto(
                 id = id,
                 mode = path.getMode().name,
                 referenceLocation = refLoc,
+                locations = locs
+            )
+        }
+
+        fun fromRacePath(id: String, path: RacePath): PathDto {
+            val locs = path.getLocationList().map { PathLocationDto.fromLocation(it) }.toMutableList()
+
+            return PathDto(
+                id = id,
+                mode = PathMode.CLOSEST_TO_FURTHEST.name,
+                referenceLocation = null,
                 locations = locs
             )
         }

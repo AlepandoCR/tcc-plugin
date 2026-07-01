@@ -54,7 +54,20 @@ class ConfigCommand(
                         plugin.logger.severe("Error reloading data-driven configs: ${ex.message}")
                         null
                     }
+                    plugin.racePathManager.reloadAsync().thenAccept {
+                        plugin.server
+                            .scheduler
+                            .runTask(plugin, Runnable {
+                                sender.sendComponent(Component.text("Reloaded race paths").color(NamedTextColor.GREEN))
+                            })
+                    }
+
+                    plugin.raceManager.reload()
+
+
+
                     true
+
                 }
             }
 

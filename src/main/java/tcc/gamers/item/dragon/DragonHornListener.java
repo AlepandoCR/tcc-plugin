@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
 import tcc.gamers.nms.nautilus.DragonMountNautilus;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class DragonHornListener implements Listener {
 
     private final @NotNull TCCPlugin plugin;
@@ -70,7 +72,28 @@ public class DragonHornListener implements Listener {
 
                             player.playSound(spawnLoc,Sound.ENTITY_GENERIC_EXPLODE,1.0f,1.0f);
 
-                            new DragonMountNautilus(player.getWorld(), plugin, player).spawn(spawnLoc);
+                            AtomicBoolean removed = new AtomicBoolean(false);
+
+                            spawnLoc.getNearbyEntities(20,20,20).stream()
+                                    .filter(
+                                            DragonMountNautilus::isOwnedDragon
+                                    ).forEach(entity ->
+                                            DragonMountNautilus
+                                                    .getDragonOwner(entity)
+                                                    .ifPresent(ownerUniqueIdentifier -> {
+                                                        if(ownerUniqueIdentifier.equals(player.getUniqueId())){
+                                                            entity.remove();
+                                                            removed.set(true);
+                                                        }
+                                                    }
+                                            )
+                                    );
+
+                            if(!removed.get()){ // if none removed spawn new
+                                var dragon = new DragonMountNautilus(player.getWorld(), plugin, player);
+
+                                dragon.spawn(spawnLoc);
+                            }
                         }
                     }
                 }

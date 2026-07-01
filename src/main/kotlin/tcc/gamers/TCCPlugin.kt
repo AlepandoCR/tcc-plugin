@@ -10,17 +10,25 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.skriptlang.skript.addon.SkriptAddon
 import org.spartan.api.SpartanApi
 import org.spartan.internal.facade.SpartanApiImpl
-import tcc.gamers.ai.event.skript.SkriptEventRegistry
-import tcc.gamers.ai.event.vault.VaultFixListener
+import tcc.gamers.ball.BallInteractionListener
+import tcc.gamers.ball.BallManager
+import tcc.gamers.event.skript.SkriptEventRegistry
+import tcc.gamers.event.vault.VaultFixListener
 import tcc.gamers.item.dragon.DragonHornListener
 import tcc.gamers.config.ConfigManager
 import tcc.gamers.config.HorseConfig
+import tcc.gamers.config.command.BallCommand
 import tcc.gamers.config.command.ConfigCommand
 import tcc.gamers.config.command.DragonTrainingCommand
+import tcc.gamers.config.command.ParticleProjectorCommand
 import tcc.gamers.config.command.RaidAdminCommand
 import tcc.gamers.config.command.SpawnNautilusCommand
 import tcc.gamers.data.DataDrivenManager
 import tcc.gamers.horses.command.SpartanHorseCommand
+import tcc.gamers.item.particle.ParticleProjectorListener
+import tcc.gamers.item.particle.ParticleProjectorManager
+import tcc.gamers.race.RaceListener
+import tcc.gamers.race.RaceManager
 import tcc.gamers.raid.RaidManager
 import tcc.gamers.skript.EffectDynamicUpdate
 import tcc.gamers.skript.ExpressionMutableValue
@@ -29,8 +37,10 @@ import tcc.gamers.tutorials.entities.HiddenPlayerManager
 import tcc.gamers.tutorials.listener.TutorialStarter
 import tcc.gamers.tutorials.tutorial.TutorialManager
 import tcc.gamers.tutorials.tutorial.command.PathCommand
+import tcc.gamers.tutorials.tutorial.command.RacePathCommand
 import tcc.gamers.tutorials.tutorial.command.TutorialCommand
 import tcc.gamers.tutorials.tutorial.manager.PathManager
+import tcc.gamers.tutorials.tutorial.manager.RacePathManager
 import tcc.gamers.tutorials.tutorial.session.SessionManager
 import tcc.gamers.util.StorageFolder
 import tcc.gamers.util.hasTutorialTag
@@ -39,14 +49,18 @@ import java.io.File
 class TCCPlugin : JavaPlugin() {
 
     lateinit var spartanApi: SpartanApi
-    lateinit var pathManager: PathManager
+    lateinit var taxiPathManager: PathManager
+    lateinit var racePathManager: RacePathManager
     lateinit var sessionManager: SessionManager
     lateinit var configManager: ConfigManager
     lateinit var skriptMutableRegistry: SkriptMutableRegistry
     lateinit var skriptAddon: SkriptAddon
     lateinit var dataDrivenManager: DataDrivenManager
     lateinit var raidManager: RaidManager
+    lateinit var particleProjectorManager: ParticleProjectorManager
     lateinit var mythicApi: MythicBukkit
+    lateinit var raceManager: RaceManager
+    lateinit var ballManager: BallManager
 
     companion object {
         @JvmStatic
@@ -71,26 +85,35 @@ class TCCPlugin : JavaPlugin() {
         if (!this.dataFolder.exists()) this.dataFolder.mkdirs()
         startManagers()
 
-        registerCommands()
-
         registerListeners(
+            RaceListener(this),
             TutorialStarter(this),
             DragonHornListener(this),
-            VaultFixListener(this)
+            VaultFixListener(this),
+            ParticleProjectorListener(this, particleProjectorManager),
+            BallInteractionListener(this)
         )
+
+        registerCommands()
 
         SkriptEventRegistry.registerAll(skriptAddon)
 
         raidManager = RaidManager(this)
+
+        particleProjectorManager.startLoop()
     }
 
     private fun registerCommands() {
-        val pathCommand = PathCommand(this, pathManager, sessionManager)
-        val spartanHorseCommand = SpartanHorseCommand(this, pathManager)
+        val pathCommand = PathCommand(this, taxiPathManager, sessionManager)
+        val spartanHorseCommand = SpartanHorseCommand(this, taxiPathManager)
         val configCommand = ConfigCommand(this)
         val raidCommand = RaidAdminCommand(this)
         val nautilusCommand = SpawnNautilusCommand(this)
         val dragonTrainCommand = DragonTrainingCommand(this)
+        val racePathCommand = RacePathCommand(this, racePathManager, sessionManager)
+        val ballCommand = BallCommand(this)
+
+        val particle = ParticleProjectorCommand()
 
         registerCommand("tutorials", TutorialCommand(this))
         registerCommand("path", pathCommand, pathCommand)
@@ -99,19 +122,24 @@ class TCCPlugin : JavaPlugin() {
         registerCommand("raids", raidCommand, raidCommand)
         registerCommand("nauti", nautilusCommand, nautilusCommand)
         registerCommand("dragontrain", dragonTrainCommand, dragonTrainCommand)
+        registerCommand("particleprojector",particle)
+        registerCommand("racepath", racePathCommand, racePathCommand)
+        registerCommand("ball", ballCommand, ballCommand)
     }
 
     private fun startManagers() {
         HiddenPlayerManager.start(this)
-        pathManager = PathManager(File(this.dataFolder, StorageFolder.PATHS.folderName))
+        ballManager = BallManager(this)
+        taxiPathManager = PathManager(File(this.dataFolder, StorageFolder.PATHS.folderName))
+        racePathManager = RacePathManager(File(this.dataFolder, StorageFolder.RACE_PATHS.folderName))
         sessionManager = SessionManager(this)
+        particleProjectorManager = ParticleProjectorManager(this)
+        raceManager = RaceManager(this)
+        configManager = ConfigManager(this)
         bootConfig()
     }
 
     private fun bootConfig() {
-        configManager = ConfigManager(this)
-        configManager.registerHorseConfig()
-        configManager.registerZombieConfig()
         configManager.load()
     }
 

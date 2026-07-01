@@ -9,13 +9,17 @@ import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
 import tcc.gamers.ai.minecraft.dragon.DragonAttackBehaviorControl;
 import tcc.gamers.ai.minecraft.dragon.DragonFollowOwnerBehaviorControl;
+import tcc.gamers.util.namespacedkey.TCCNameSpacedKeys;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Concrete player-mounted dragon Nautilus.
@@ -54,15 +58,42 @@ public class DragonMountNautilus extends AbstractDragonNautilus<DragonMountNauti
             @NotNull org.bukkit.entity.Player owner
     ) {
         super(world, plugin);
-        this.owner                 = owner;
+        this.owner = owner;
         this.attackBehaviorControl = new DragonAttackBehaviorControl<>(plugin);
-        this.dragonUITask          = new DragonUITask(plugin, this, owner);
+        this.dragonUITask = new DragonUITask(plugin, this, owner);
     }
 
 
     @Override
     void onSpawn(@NotNull Location spawnLocation) {
-        // nothing
+        getBukkitNautilus().getPersistentDataContainer().set(
+                TCCNameSpacedKeys.DRAGON_OWNER.getNamespacedKey(),
+                PersistentDataType.STRING,
+                owner.getUniqueId().toString()
+        );
+    }
+
+    public static boolean isOwnedDragon(@NotNull Entity entity) {
+        return entity.getPersistentDataContainer().has(
+                TCCNameSpacedKeys.DRAGON_OWNER.getNamespacedKey(),
+                PersistentDataType.STRING
+        );
+    }
+
+    public static @NotNull Optional<UUID> getDragonOwner(@NotNull Entity entity) {
+        if (!isOwnedDragon(entity)) return Optional.empty();
+
+
+        var string =  entity.getPersistentDataContainer().get(
+                TCCNameSpacedKeys.DRAGON_OWNER.getNamespacedKey(),
+                PersistentDataType.STRING);
+
+        if(string == null) return Optional.empty();
+
+        var uuid = UUID.fromString(string);
+
+
+        return Optional.of(uuid);
     }
 
     @Override

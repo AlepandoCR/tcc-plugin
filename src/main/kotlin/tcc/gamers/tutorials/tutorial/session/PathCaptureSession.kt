@@ -8,8 +8,8 @@ import org.bukkit.entity.Player
 import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractEvent
 import tcc.gamers.tutorials.tutorial.manager.PathManager
-import tcc.gamers.util.Path
-import tcc.gamers.util.PathMode
+import tcc.gamers.util.path.Path
+import tcc.gamers.util.path.PathMode
 import tcc.gamers.util.sendComponent
 import java.util.*
 
@@ -41,10 +41,10 @@ class PathCaptureSession(
             val loaded = pathManager.loadPath(pathId, player.location)
             if (loaded != null) {
                 // copy loaded locations into our path
-                loaded.getLocations().forEach { path.addLocation(it) }
+                loaded.getLocationList().forEach { path.addLocation(it) }
                 // spawn markers for existing points
                 spawnMarkersForPath()
-                player.sendComponent(Component.text("Editing path '$pathId' with ${path.getLocations().size} points.").color(NamedTextColor.YELLOW))
+                player.sendComponent(Component.text("Editing path '$pathId' with ${path.getLocationList().size} points.").color(NamedTextColor.YELLOW))
             } else {
                 player.sendComponent(Component.text("Path '$pathId' not found; starting new.").color(NamedTextColor.RED))
             }
@@ -60,7 +60,7 @@ class PathCaptureSession(
     }
 
     private fun spawnMarkersForPath() {
-        path.getLocations().forEach { loc ->
+        path.getLocationList().forEach { loc ->
             spawnMarkerAt(loc, "pathCapture:$pathId")
         }
     }
@@ -115,11 +115,11 @@ class PathCaptureSession(
         Bukkit.getScheduler().runTask(plugin, Runnable {
             spawnMarkerAt(location, "pathCapture:$pathId")
         })
-        player.sendComponent(Component.text("Point added. Total: ${path.getLocations().size}").color(NamedTextColor.GREEN))
+        player.sendComponent(Component.text("Point added. Total: ${path.getLocationList().size}").color(NamedTextColor.GREEN))
     }
 
     fun removeLastPoint() {
-        val locs = path.getLocations()
+        val locs = path.getLocationList()
         if (locs.isEmpty()) {
             player.sendComponent(Component.text("No points to remove.").color(NamedTextColor.YELLOW))
             return
@@ -131,14 +131,14 @@ class PathCaptureSession(
         Bukkit.getScheduler().runTask(plugin, Runnable {
             removeLastVisual()
         })
-        player.sendComponent(Component.text("Removed last point. Remaining: ${path.getLocations().size}").color(NamedTextColor.YELLOW))
+        player.sendComponent(Component.text("Removed last point. Remaining: ${path.getLocationList().size}").color(NamedTextColor.YELLOW))
     }
 
     private fun finishAndSave() {
         // save path
         val ok = pathManager.savePath(pathId, path)
         if (ok) {
-            player.sendComponent(Component.text("Path '$pathId' saved (${path.getLocations().size} points).").color(NamedTextColor.GOLD))
+            player.sendComponent(Component.text("Path '$pathId' saved (${path.getLocationList().size} points).").color(NamedTextColor.GOLD))
             saved = true
         } else {
             player.sendComponent(Component.text("Failed to save path '$pathId'.").color(NamedTextColor.RED))

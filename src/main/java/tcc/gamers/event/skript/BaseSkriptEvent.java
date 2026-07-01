@@ -1,4 +1,4 @@
-package tcc.gamers.ai.event.skript;
+package tcc.gamers.event.skript;
 
 import ch.njol.skript.lang.util.SimpleEvent;
 import org.bukkit.event.Event;

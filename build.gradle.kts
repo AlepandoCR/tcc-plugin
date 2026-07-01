@@ -26,7 +26,7 @@ dependencies {
     val democracyLibVersion = "3f0213ee92"
     val democracyLib = "com.github.MCCitiesNetwork:DemocracyLib:$democracyLibVersion"
 
-    paperweight.paperDevBundle("26.1.2.+") // nms
+    paperweight.paperDevBundle("26.1.2.build.+") // nms
 
     val skriptVersion = "2.15.2"
 
@@ -42,7 +42,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    implementation("io.github.alepandocr:spartan-internal:1.0.35:linux") //RL
+    implementation("io.github.alepandocr:spartan-internal:1.0.35:windows") //RL
     implementation("io.github.alepandocr:spartan-api:1.0.35") //RL
 
     implementation(democracyLib) // config and db

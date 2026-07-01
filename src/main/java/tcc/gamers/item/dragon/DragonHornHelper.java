@@ -1,5 +1,7 @@
 package tcc.gamers.item.dragon;
 
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -25,7 +27,9 @@ public class DragonHornHelper {
         ItemMeta meta = item.getItemMeta();
 
         if (meta instanceof MusicInstrumentMeta instrumentMeta) {
-            MusicInstrument feelHorn = Registry.INSTRUMENT.get(NamespacedKey.minecraft("feel_goat_horn"));
+            var registry = RegistryAccess.registryAccess();
+            var musicRegistry = registry.getRegistry(RegistryKey.INSTRUMENT);
+            MusicInstrument feelHorn = musicRegistry.get(NamespacedKey.minecraft("feel_goat_horn"));
             if (feelHorn != null) {
                 instrumentMeta.setInstrument(feelHorn);
             }

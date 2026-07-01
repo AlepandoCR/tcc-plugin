@@ -12,6 +12,10 @@ commands:
     description: "Create and edit saved paths"
     usage: /path <create|edit|delete|list|cancel>
     permission: path.use
+  racepath:
+    description: "Create and edit saved racepaths"
+    usage: /path <create|edit|delete|list|cancel>
+    permission: path.use
   taxi:
     description: "Spawn a taxi (Spartan horse) and assign a path"
     usage: /taxi spawn <pathId> <start_finish|finish_start>
@@ -30,8 +34,16 @@ commands:
     usage: /nauti
     permission: op
   dragontrain:
-    description: "trains tragons"
+    description: "trains dragons"
     usage: /dragontrin <amount>
+    permission: op
+  particleprojector:
+    description: "give for particle projector"
+    usage: /particleprojector
+    permission: op
+  ball:
+    description: "give for ball"
+    usage: /ball
     permission: op
 
 

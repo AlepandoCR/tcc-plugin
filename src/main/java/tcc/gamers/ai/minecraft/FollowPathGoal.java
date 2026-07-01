@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
 import tcc.gamers.ai.controller.SpeedController;
 import tcc.gamers.nms.horses.CustomSpartanHorse;
-import tcc.gamers.util.Path;
-import tcc.gamers.util.PathMode;
+import tcc.gamers.util.path.Path;
+import tcc.gamers.util.path.PathMode;
 
 import java.util.Optional;
 import java.util.Set;

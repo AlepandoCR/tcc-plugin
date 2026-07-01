@@ -1,10 +1,14 @@
-package tcc.gamers.ai.event.skript;
+package tcc.gamers.event.skript;
 
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.skriptlang.skript.addon.SkriptAddon;
-import tcc.gamers.ai.event.RaidCompleteEvent;
-import tcc.gamers.ai.event.RaidPlayerJoinEvent;
-import tcc.gamers.ai.event.RaidPlayerLeaveEvent;
+import tcc.gamers.event.race.EntityCrossCheckpointEvent;
+import tcc.gamers.event.RaidCompleteEvent;
+import tcc.gamers.event.RaidPlayerJoinEvent;
+import tcc.gamers.event.RaidPlayerLeaveEvent;
+
+import java.util.UUID;
 
 public class SkriptEventRegistry {
 
@@ -32,6 +36,17 @@ public class SkriptEventRegistry {
                 registerValue(Player.class, RaidCompleteEvent::getPlayer);
                 registerValue(String.class, e -> e.getRaid().getIdentifier());
                 registerValue(Integer.class, RaidCompleteEvent::getKarma);
+            }
+        }.register();
+
+        new BaseSkriptEvent<>(addon, "Race checkpoint", EntityCrossCheckpointEvent.class, "race checkpoint") {
+            @Override
+            protected void registerEventValues() {
+                registerValue(UUID.class, EntityCrossCheckpointEvent::getEntityUuid);
+                registerValue(String.class, e -> e.getRace().getIdentifier());
+                registerValue(Integer.class, EntityCrossCheckpointEvent::getCheckpointIndex);
+                registerValue(Boolean.class, EntityCrossCheckpointEvent::isGoal);
+                registerValue(Location.class, EntityCrossCheckpointEvent::getCheckpointLocation);
             }
         }.register();
 

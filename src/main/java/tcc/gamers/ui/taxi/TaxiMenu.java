@@ -1,5 +1,5 @@
 
-package tcc.gamers.ui;
+package tcc.gamers.ui.taxi;
 
 import io.papermc.paper.registry.data.dialog.ActionButton;
 import io.papermc.paper.registry.data.dialog.action.DialogAction;
@@ -20,16 +20,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Dialog
-@SuppressWarnings({
+	@SuppressWarnings({
 		"unused"
 })
 public class TaxiMenu {
 
 	private final TCCPlugin plugin;
 
-	public TaxiMenu(@NotNull TCCPlugin plugin) {
+	private final Player player;
+
+	public TaxiMenu(@NotNull TCCPlugin plugin, @NotNull Player player) {
 		this.plugin = plugin;
-	}
+        this.player = player;
+    }
 
 	@DialogBody(
 			id = "taxiMenuBody",
@@ -50,18 +53,31 @@ public class TaxiMenu {
 	public List<ActionButton> getTaxiDestinations(){
 		var actions = new ArrayList<ActionButton>();
 
-		for (String path : plugin.getPathManager().listPathIds()) {
+		for (String path : plugin.getTaxiPathManager().listPathIds()) {
+
+			var loadedPath = plugin.getTaxiPathManager().loadPath(path, player.getLocation());
+
+			if (loadedPath == null) {
+				continue;
+			} else {
+				player.sendMessage(Component.text("Path not found", NamedTextColor.RED));
+			}
+
+			if(loadedPath.isAirPath()){
+				continue;
+			}
+
 			actions.add(
 					ActionButton
 							.builder(Component.text(path, NamedTextColor.GREEN))
 							.action(DialogAction.customClick((_response, audience) -> {
-										if(audience instanceof Player player){
-											var loadedPath = plugin.getPathManager().loadPath(path, player.getLocation());
-											if (loadedPath != null) {
-												TaxiSpawner.spawnTaxi(plugin, loadedPath, player.getLocation(), player);
-											} else {
-												player.sendMessage(Component.text("Path not found", NamedTextColor.RED));
-											}
+										if(audience instanceof Player){
+												TaxiSpawner.spawnTaxi(
+														plugin,
+														loadedPath,
+														player.getLocation(),
+														player
+												);
 										}
 									}, ClickCallback.Options.builder().build()))
 							.build()
@@ -72,7 +88,7 @@ public class TaxiMenu {
 	}
 
 	public static void open(@NotNull TCCPlugin plugin, @NotNull Player player){
-		var menu = new TaxiMenu(plugin);
+		var menu = new TaxiMenu(plugin, player);
 		var dialog = DialogFactory.create(menu);
 
 		if(dialog != null){

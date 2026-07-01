@@ -1,39 +1,31 @@
-package tcc.gamers.util
+package tcc.gamers.util.path
 
 import org.bukkit.Location
-
-enum class PathMode {
-    CLOSEST_TO_FURTHEST,  // walk insertion order: first → last
-    FURTHEST_TO_CLOSEST   // walk insertion order reversed: last → first
-}
 
 class Path(
     private var referenceLocation: Location? = null,
     private var mode: PathMode = PathMode.CLOSEST_TO_FURTHEST
-) {
+) : AbstractPath() {
 
-    private val locations: MutableList<Location> = ArrayList()
     private val queue: ArrayDeque<Location> = ArrayDeque()
     private var dirty: Boolean = true
 
-    fun addLocation(newLocation: Location) {
-        locations.add(newLocation)
+    override fun addLocation(newLocation: Location) {
+        super.addLocation(newLocation)
         dirty = true
     }
 
-    fun removeLocation(location: Location) {
-        locations.remove(location)
+    override fun removeLocation(location: Location) {
+        super.removeLocation(location)
         queue.remove(location)
     }
 
-    fun clear() {
-        locations.clear()
+    override fun clear() {
+        super.clear()
         queue.clear()
         dirty = true
     }
 
-    // Reference location is kept for external readers (e.g. TaxiSpawner.selectAutoMode)
-    // but no longer influences traversal order — insertion order is always used.
     fun setReferenceLocation(location: Location) {
         referenceLocation = location
     }
@@ -59,7 +51,6 @@ class Path(
 
     fun getMode(): PathMode = mode
     fun getReferenceLocation(): Location? = referenceLocation
-    fun getLocations(): List<Location> = locations.toList()
 
     private fun ensureCommitted() {
         if (!dirty) return

@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class SupervisedArea extends Area implements Ticker {
+public abstract class SupervisedArea extends Area implements Ticker<BukkitTask> {
 
     protected final @NotNull TCCPlugin plugin;
 
@@ -101,13 +101,11 @@ public abstract class SupervisedArea extends Area implements Ticker {
         if(onTick){
             onTick();
         }else{
-            // show borders to players inside
+            // show borders to players inside only when extended logic is not being executed, since particles are hard on clientside
             getEntitiesInAreaOfType(Player.class)
                     .forEach(this::visualize);
         }
     }
-
-
 
     @Override
     public void stop() {

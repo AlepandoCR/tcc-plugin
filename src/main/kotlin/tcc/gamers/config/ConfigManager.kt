@@ -23,7 +23,15 @@ class ConfigManager(private val plugin: TCCPlugin) {
 
     private lateinit var raidMobsConfigHandle: ConfigHandle<RaidMobsConfig>
 
-    fun load(): Int = reloadAll()
+    private lateinit var particleMenuConfigHandle: ConfigHandle<ParticleMenuConfig>
+
+    fun load(): Int {
+        this.registerHorseConfig()
+        this.registerZombieConfig()
+        this.registerParticleProjectorConfig()
+
+        return reloadAll()
+    }
 
     fun reloadAll(): Int {
         var successCount = 0
@@ -93,6 +101,29 @@ class ConfigManager(private val plugin: TCCPlugin) {
         return zombieHandle
     }
 
+    fun registerParticleProjectorConfig(): ConfigHandle<ParticleMenuConfig> {
+        val particle = register(
+            key = "particle",
+            folder = StorageFolder.GAME_DATA,
+            fileName = "particle-projector.yml",
+            generatedClass = GeneratedParticleMenuConfig::class.java,
+            defaultConfig = ParticleMenuConfig(
+                "<white>missing-config",
+                "<white>missing-config",
+                "<white>missing-config",
+                1.5,
+                0.1,
+                10.0,
+                1.0
+            ),
+            mapper = { generated -> ParticleMenuConfig(generated) }
+        )
+
+        particleMenuConfigHandle = particle
+
+        return particle
+    }
+
     fun <G : GeneratedConfig, T : TCCConfig> register(
         key: String,
         folder: StorageFolder,
@@ -119,6 +150,9 @@ class ConfigManager(private val plugin: TCCPlugin) {
 
     val raidMobsConfig: RaidMobsConfig
         get() = raidMobsConfigHandle.current
+
+    val particleProjectorConfig: ParticleMenuConfig
+        get() = particleMenuConfigHandle.current
 
     class ConfigHandle<T : TCCConfig>(initial: T) {
         @Volatile

@@ -89,6 +89,8 @@ public abstract class AbstractDragonNautilus<E extends AbstractNautilus> extends
 
     private boolean isAutonomous = false;
 
+    private boolean freeze = false;
+
     private @Nullable Model<org.bukkit.entity.Nautilus> model;
 
     protected AbstractDragonNautilus(@NotNull World world, @NotNull TCCPlugin plugin) {
@@ -143,6 +145,15 @@ public abstract class AbstractDragonNautilus<E extends AbstractNautilus> extends
     }
 
     abstract void onSpawn(@NotNull Location spawnLocation);
+
+
+    public boolean isFreeze(){
+        return this.freeze;
+    }
+
+    public void setFreeze(boolean freeze){
+        this.freeze = freeze;
+    }
 
 
 
@@ -256,6 +267,7 @@ public abstract class AbstractDragonNautilus<E extends AbstractNautilus> extends
      * @param pitch     the vertical pitch in degrees (positive = looking down)
      */
     public void applyFlight(@NotNull Vec3 lookAngle, float pitch) {
+        if(freeze) return;
         if (this.onGround()) {
             this.storedDiveEnergy    = 0.0;
             this.stallTicks          = 0;

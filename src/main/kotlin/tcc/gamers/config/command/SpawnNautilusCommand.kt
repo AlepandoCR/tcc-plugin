@@ -42,6 +42,13 @@ class SpawnNautilusCommand(private val plugin: TCCPlugin) : CommandExecutor, Tab
                 sender.inventory.addItem(DragonHornHelper.createSoulShard(amount))
                 sender.sendComponent(Component.text("Has recibido $amount Fragmentos de Alma.").color(NamedTextColor.AQUA))
             }
+            "race" -> {
+                val arg = args.getOrNull(1)
+                if (arg == "reload") {
+                    plugin.racePathManager
+                    sender.sendComponent(Component.text("Configuración recargada.").color(NamedTextColor.GREEN))
+                }
+            }
             else -> sender.sendComponent(Component.text("Uso: /spawnnautilus <spawn|horn|soul>").color(NamedTextColor.RED))
         }
         return true
@@ -49,12 +56,13 @@ class SpawnNautilusCommand(private val plugin: TCCPlugin) : CommandExecutor, Tab
 
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String> {
         if (args.size == 1) {
-            return listOf("spawn", "horn", "soul").filter { it.startsWith(args[0].lowercase()) }
+            return listOf("spawn", "horn", "soul", "race").filter { it.startsWith(args[0].lowercase()) }
         }
         if (args.size == 2) {
             return when (args[0].lowercase()) {
                 "horn" -> listOf("<cantidad_almas>")
                 "soul" -> listOf("<cantidad>")
+                "race" -> listOf("reload")
                 else -> emptyList()
             }
         }

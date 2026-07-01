@@ -9,7 +9,7 @@ import org.yaml.snakeyaml.nodes.Tag
 import org.yaml.snakeyaml.representer.Representer
 import tcc.gamers.tutorials.tutorial.data.PathDto
 import tcc.gamers.tutorials.tutorial.data.PathLocationDto
-import tcc.gamers.util.Path
+import tcc.gamers.util.path.Path
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileWriter
