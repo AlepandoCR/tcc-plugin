@@ -46,6 +46,7 @@ enum class StorageFolder(val folderName: String) {
     RAID_MOB(RAID.folderName + "/mob"),
     RAID_AREA(RAID.folderName + "/area"),
     RACE_PATHS("race-paths"),
+    PERMA_DEATH_DATA(GAME_DATA.folderName + "/perma-death"),
     DRAGON_RACES(RACE_PATHS.folderName + "/dragon-races");
 
     fun getFolder(plugin: TCCPlugin): File {

@@ -12,20 +12,7 @@ import java.util.logging.Logger
 /**
  * Utility class for loading data-driven plugin configurations from directories.
  * It reads all `.yml` files within a specified folder, parses them into generated configs,
- * transforms them into DTOs, and returns a list of the loaded objects.
- *
- * Example usage:
- * <pre>`DataDrivenLoader loader = new DataDrivenLoader(plugin);
- * loader.loadDirectory(
- * StorageFolder.RAIDS,
- * GeneratedRaidDto.class,
- * config -> new RaidDto(config),
- * raids -> {
- * this.raidsMap = raids.stream().collect(Collectors.toMap(RaidDto::getAreaIdentifier, r -> r));
- * },
- * "RaidData"
- * );
- * CompletableFuture<Void> allLoaded = loader.loadAll();`</pre>
+ * transforms them into DTOs, and returns a list of the loaded objects
  */
 @Suppress("unused")
 class DataDrivenLoader(private val plugin: TCCPlugin) {
@@ -145,6 +132,46 @@ class DataDrivenLoader(private val plugin: TCCPlugin) {
         // Wait for all directory tasks to finish
         return CompletableFuture.allOf(*taskFutures.toTypedArray())
             .thenRun { logger.info("All data-driven configurations loaded successfully.") }
+    }
+
+
+    fun <G : GeneratedConfig, T : Any> saveToDirectory(
+        folder: StorageFolder,
+        fileName: String,
+        dto: T,
+        generatedClass: Class<G>,
+        fieldMapper: Function<T, Map<String, Any?>>
+    ): CompletableFuture<Void> {
+        val dir = folder.getFolder(plugin)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+
+        val nameWithExtension = if (fileName.endsWith(".yml")) fileName else "$fileName.yml"
+        val file = File(dir, nameWithExtension)
+
+        return ConfigFactory.loadOrCreateAsync(file, generatedClass).thenCompose { config ->
+            try {
+                val fieldsToSet = fieldMapper.apply(dto)
+
+                for ((fieldName, value) in fieldsToSet) {
+                    val field = generatedClass.getDeclaredField(fieldName)
+                    field.isAccessible = true
+                    field.set(config, value)
+                }
+
+                config.saveAsync().thenApply {
+                    logger.info("Successfully saved data to $nameWithExtension")
+                    null
+                }
+            } catch (ex: Exception) {
+                logger.severe("Failed to inject data or save file $nameWithExtension: ${ex.message}")
+
+                val failedFuture = CompletableFuture<Void>()
+                failedFuture.completeExceptionally(ex)
+                failedFuture
+            }
+        }
     }
 
     /**

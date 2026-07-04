@@ -53,7 +53,7 @@ public class BallInteractionListener implements Listener {
                 itemInHand.subtract();
                 var ball = new Ball(world ,plugin);
 
-                ball.spawn(world.getHighestBlockAt(player.getLocation()).getLocation().add(0, 1, 0));
+                ball.spawn(player.getLocation());
 
                 plugin.getBallManager().registerBall(ball);
             }
@@ -64,7 +64,7 @@ public class BallInteractionListener implements Listener {
     public void onPlayerUnequipCleats(@NotNull PlayerArmorChangeEvent event){
         if(event.getSlot().equals(EquipmentSlot.FEET)){
             var player = event.getPlayer();
-            if(SoccerCleatsHelper.playerHasCleats(player)){
+            if(!SoccerCleatsHelper.playerHasCleats(player)){
                 plugin
                         .getBallManager()
                         .getSafeBalls()

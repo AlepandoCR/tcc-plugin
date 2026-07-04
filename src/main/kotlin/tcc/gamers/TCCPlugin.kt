@@ -44,6 +44,9 @@ import tcc.gamers.tutorials.tutorial.manager.RacePathManager
 import tcc.gamers.tutorials.tutorial.session.SessionManager
 import tcc.gamers.util.StorageFolder
 import tcc.gamers.util.hasTutorialTag
+import tcc.permadeath.PermaDeathListener
+import tcc.permadeath.PermaDeathManager
+import tcc.permadeath.command.PermaDeathCommand
 import java.io.File
 
 class TCCPlugin : JavaPlugin() {
@@ -61,6 +64,7 @@ class TCCPlugin : JavaPlugin() {
     lateinit var mythicApi: MythicBukkit
     lateinit var raceManager: RaceManager
     lateinit var ballManager: BallManager
+    lateinit var permaDeathManager: PermaDeathManager
 
     companion object {
         @JvmStatic
@@ -91,7 +95,8 @@ class TCCPlugin : JavaPlugin() {
             DragonHornListener(this),
             VaultFixListener(this),
             ParticleProjectorListener(this, particleProjectorManager),
-            BallInteractionListener(this)
+            BallInteractionListener(this),
+            PermaDeathListener(this.permaDeathManager)
         )
 
         registerCommands()
@@ -112,6 +117,7 @@ class TCCPlugin : JavaPlugin() {
         val dragonTrainCommand = DragonTrainingCommand(this)
         val racePathCommand = RacePathCommand(this, racePathManager, sessionManager)
         val ballCommand = BallCommand(this)
+        val permaDeathCommand = PermaDeathCommand(this)
 
         val particle = ParticleProjectorCommand()
 
@@ -125,6 +131,7 @@ class TCCPlugin : JavaPlugin() {
         registerCommand("particleprojector",particle)
         registerCommand("racepath", racePathCommand, racePathCommand)
         registerCommand("ball", ballCommand, ballCommand)
+        registerCommand("permadeath", permaDeathCommand, permaDeathCommand)
     }
 
     private fun startManagers() {
@@ -136,10 +143,12 @@ class TCCPlugin : JavaPlugin() {
         particleProjectorManager = ParticleProjectorManager(this)
         raceManager = RaceManager(this)
         configManager = ConfigManager(this)
+        permaDeathManager = PermaDeathManager(this)
         bootConfig()
     }
 
     private fun bootConfig() {
+        permaDeathManager.loadAllAsync()
         configManager.load()
     }
 
@@ -167,6 +176,7 @@ class TCCPlugin : JavaPlugin() {
 
 
     override fun onDisable() {
+        permaDeathManager.saveAllAsync()
         HiddenPlayerManager.stop()
         TutorialManager.cancelAll()
         // stop active sessions to ensure cleanup

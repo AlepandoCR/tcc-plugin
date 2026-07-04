@@ -45,7 +45,9 @@ commands:
     description: "give for ball"
     usage: /ball
     permission: op
-
+  permadeath:
+    description: "permadeath management"
+    usage: /permadeath
 
 permissions:
   tutorials.start:
