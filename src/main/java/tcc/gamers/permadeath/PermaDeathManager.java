@@ -1,4 +1,4 @@
-package tcc.permadeath;
+package tcc.gamers.permadeath;
 
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
@@ -150,7 +150,12 @@ public class PermaDeathManager {
 
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     if (player.isOnline()) {
-                        player.kick(deathMessage);
+                        player.kick(
+                                deathMessage.append(Component.newline()
+                                        .append(Component.text(" Gracias por participar en ").color(NamedTextColor.GRAY))
+                                        .append(Component.text("Reinos en Ruinas").color(NamedTextColor.LIGHT_PURPLE))
+                                )
+                        );
                     }
                 }, 20L * 5);
             });

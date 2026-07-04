@@ -1,4 +1,4 @@
-package tcc.permadeath;
+package tcc.gamers.permadeath;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

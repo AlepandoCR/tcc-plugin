@@ -44,8 +44,8 @@ import tcc.gamers.tutorials.tutorial.manager.RacePathManager
 import tcc.gamers.tutorials.tutorial.session.SessionManager
 import tcc.gamers.util.StorageFolder
 import tcc.gamers.util.hasTutorialTag
-import tcc.permadeath.PermaDeathListener
-import tcc.permadeath.PermaDeathManager
+import tcc.gamers.permadeath.PermaDeathListener
+import tcc.gamers.permadeath.PermaDeathManager
 import tcc.permadeath.command.PermaDeathCommand
 import java.io.File
 
