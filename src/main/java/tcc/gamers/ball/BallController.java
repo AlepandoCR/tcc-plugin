@@ -25,7 +25,7 @@ public class BallController {
         this.bukkitBall = (org.bukkit.entity.LivingEntity) nmsBall.getBukkitEntity();
 
         this.physicManager = new PhysicManager(this, plugin);
-        this.kickController = new KickController(plugin, this);
+        this.kickController = plugin.getKickController();
     }
 
     public void tick() {

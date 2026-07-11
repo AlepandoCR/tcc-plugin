@@ -97,16 +97,27 @@ public class PermaDeathManager {
     public void onPlayerDeath(@NotNull Player player) {
         if(!enabled) return;
 
+        Component deathMessage = Component.text()
+                .append(Component.text("\n"))
+                .append(Component.text(" ☠ ", NamedTextColor.DARK_RED))
+                .append(Component.text(player.getName(), NamedTextColor.RED, TextDecoration.BOLD))
+                .append(Component.text(" "))
+                .append(getPlayerFaceComponent(player.getUniqueId()).orElse(Component.text("")))
+                .append(Component.text(" ha perdido una vida.", NamedTextColor.GRAY))
+                .build();
+
         getDeathsDtoFor(player).ifPresent(dto -> {
             dto.addDeath();
 
-            checkPermaDeath(player, dto);
+            if(!checkPermaDeath(player, dto)){
+                plugin.getServer().broadcast(deathMessage);
+            }
 
             saveAsync(dto);
         });
     }
 
-    public void checkPermaDeath(@NotNull Player player, @NotNull PlayerDeathsDto dto) {
+    public boolean checkPermaDeath(@NotNull Player player, @NotNull PlayerDeathsDto dto) {
         if (dto.isPermaDeath()) {
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 var faceComponent = getPlayerFaceComponent(player.getUniqueId()).orElse(Component.text(""));
@@ -159,7 +170,11 @@ public class PermaDeathManager {
                     }
                 }, 20L * 5);
             });
+
+            return true;
         }
+
+        return false;
     }
 
     private @NotNull Optional<Component> getPlayerFaceComponent(@NotNull UUID uuid) {

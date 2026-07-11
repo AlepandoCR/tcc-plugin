@@ -5,11 +5,13 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tcc.gamers.TCCPlugin;
+import tcc.gamers.item.ball.SoccerCleatsHelper;
 import tcc.gamers.util.Ticker;
 
 import java.util.Optional;
@@ -29,25 +31,43 @@ public class BallKickCharge implements Ticker<ScheduledTask> {
 
     private @Nullable ScheduledTask task = null;
 
-    public BallKickCharge(@NotNull LivingEntity managedEntity, @NotNull TCCPlugin plugin) {
+    private final @Nullable Runnable onExpire;
+
+    public BallKickCharge(@NotNull LivingEntity managedEntity, @NotNull TCCPlugin plugin, @Nullable Runnable onExpire) {
         this.managedEntity = managedEntity;
         this.plugin = plugin;
+        this.onExpire = onExpire;
     }
 
-    @Override
     public void tick() {
-        if (!this.managedEntity.isValid()) {
-            this.stop();
-            return;
-        }
+        if (!this.managedEntity.isValid()) { expire(); return; }
+        if (this.managedEntity instanceof Player player && !SoccerCleatsHelper.playerHasCleats(player)) { expire(); return; }
 
-        if (this.charge < MAX_KICK_CHARGE) {
+        double maxCharge = getMaxChargeForSlot();
+
+        if (this.charge > maxCharge) {
+            this.charge = maxCharge;
+        } else if (this.charge < maxCharge) {
             this.charge += 20;
         }
 
         if (this.managedEntity instanceof Player player) {
-            sendChargeActionBar(player);
+            sendChargeActionBar(player, maxCharge);
         }
+    }
+
+    private double getMaxChargeForSlot() {
+        if (this.managedEntity instanceof Player player) {
+            int slot = player.getInventory().getHeldItemSlot(); // 0-8
+            double segment = MAX_KICK_CHARGE / 9.0;
+            return segment * (slot + 1);
+        }
+        return MAX_KICK_CHARGE;
+    }
+
+    private void expire() {
+        stop();
+        if (onExpire != null) onExpire.run();
     }
 
     @Override
@@ -89,12 +109,13 @@ public class BallKickCharge implements Ticker<ScheduledTask> {
         return current;
     }
 
-    private void sendChargeActionBar(@NotNull Player player) {
+    private void sendChargeActionBar(@NotNull Player player,  double maxCharge) {
         double percentage = Math.min(1.0, charge / MAX_KICK_CHARGE);
+        double capPercentage = Math.min(1.0, maxCharge / MAX_KICK_CHARGE);
 
         Component actionBar = Component.text("⚽ ").color(NamedTextColor.GOLD)
                 .append(Component.text("[").color(NamedTextColor.GRAY))
-                .append(generateChargeBar(percentage))
+                .append(generateChargeBar(percentage, capPercentage))
                 .append(Component.text("] ").color(NamedTextColor.GRAY))
                 .append(Component.text(String.format("%.0f%%", percentage * 100))
                         .color(getColorForThreshold(percentage)));
@@ -103,17 +124,37 @@ public class BallKickCharge implements Ticker<ScheduledTask> {
     }
 
     @NotNull
-    private Component generateChargeBar(double percentage) {
+    private Component generateChargeBar(double percentage, double capPercentage) {
         int activeBars = (int) Math.round(percentage * MAX_BARS);
+        int capBar = (int) Math.min(MAX_BARS - 1, Math.round(capPercentage * MAX_BARS));
         TextComponent.Builder builder = Component.text();
 
         for (int i = 0; i < MAX_BARS; i++) {
             boolean active = i < activeBars;
-            TextColor color = active ? getColorForThreshold((double) i / MAX_BARS) : NamedTextColor.DARK_GRAY;
-            builder.append(Component.text(active ? "■" : "□").color(color));
+            boolean isCapMarker = !active && i == capBar && capPercentage < 1.0;
+
+            var component = getComponentForProgress(active, i, isCapMarker);
+
+            builder.append(component);
         }
 
         return builder.build();
+    }
+
+    @NotNull
+    private TextComponent getComponentForProgress(boolean active, double i, boolean isCapMarker) {
+        TextColor color = active
+                ? getColorForThreshold(i / MAX_BARS)
+                : (isCapMarker ? NamedTextColor.LIGHT_PURPLE : NamedTextColor.DARK_GRAY);
+
+        TextDecoration textDecoration = isCapMarker ? TextDecoration.BOLD : null;
+
+        var component = Component.text(active ? "■" : (isCapMarker ? "│" : "□")).color(color);
+
+        if(textDecoration != null) {
+            component = component.decorate(textDecoration);
+        }
+        return component;
     }
 
     @NotNull

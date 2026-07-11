@@ -12,6 +12,9 @@ import org.spartan.api.SpartanApi
 import org.spartan.internal.facade.SpartanApiImpl
 import tcc.gamers.ball.BallInteractionListener
 import tcc.gamers.ball.BallManager
+import tcc.gamers.ball.dash.DashInteractionListener
+import tcc.gamers.ball.dash.DashManager
+import tcc.gamers.ball.physics.KickController
 import tcc.gamers.event.skript.SkriptEventRegistry
 import tcc.gamers.event.vault.VaultFixListener
 import tcc.gamers.item.dragon.DragonHornListener
@@ -65,6 +68,8 @@ class TCCPlugin : JavaPlugin() {
     lateinit var raceManager: RaceManager
     lateinit var ballManager: BallManager
     lateinit var permaDeathManager: PermaDeathManager
+    lateinit var kickController: KickController
+    lateinit var dashManager: DashManager
 
     companion object {
         @JvmStatic
@@ -96,6 +101,7 @@ class TCCPlugin : JavaPlugin() {
             VaultFixListener(this),
             ParticleProjectorListener(this, particleProjectorManager),
             BallInteractionListener(this),
+            DashInteractionListener(this),
             PermaDeathListener(this.permaDeathManager)
         )
 
@@ -137,6 +143,8 @@ class TCCPlugin : JavaPlugin() {
     private fun startManagers() {
         HiddenPlayerManager.start(this)
         ballManager = BallManager(this)
+        kickController = KickController(this)
+        dashManager = DashManager(this)
         taxiPathManager = PathManager(File(this.dataFolder, StorageFolder.PATHS.folderName))
         racePathManager = RacePathManager(File(this.dataFolder, StorageFolder.RACE_PATHS.folderName))
         sessionManager = SessionManager(this)

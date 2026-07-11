@@ -11,12 +11,19 @@ import tcc.gamers.TCCPlugin;
 import tcc.gamers.item.ball.SoccerBallHelper;
 import tcc.gamers.item.ball.SoccerCleatsHelper;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class BallInteractionListener implements Listener {
 
     private final @NotNull TCCPlugin plugin;
 
+    private final @NotNull Map<UUID, Long> spawnCooldowns;
+
     public BallInteractionListener(@NotNull TCCPlugin plugin) {
         this.plugin = plugin;
+        this.spawnCooldowns = new HashMap<>();
     }
 
     @EventHandler
@@ -26,16 +33,18 @@ public class BallInteractionListener implements Listener {
 
         if(event.isSneaking()){
             if(SoccerCleatsHelper.playerHasCleats(player)){
-                plugin.getBallManager().getClosesBallTo(player.getLocation(),2.7).ifPresent(ball ->{
-                            ball.getController().getKickController().tryKick(player);
-
-                            plugin.getBallManager().getSafeBalls().forEach(otherBall -> {
-                                if (!otherBall.getUUID().equals(ball.getUUID())){
-                                    otherBall.getController().getKickController().removeCharge(player.getUniqueId()); // remove charging for other balls, only current one
-                                }
-                            });
-                        }
-                );
+                plugin.getBallManager()
+                        .getClosesBallTo(
+                                player.getLocation(),
+                                40
+                        ).ifPresent(ball ->
+                                ball.getController()
+                                        .getKickController()
+                                        .tryKick(
+                                                player,
+                                                ball.getController()
+                                        )
+                        );
             }
         }
     }
@@ -44,18 +53,34 @@ public class BallInteractionListener implements Listener {
     @EventHandler
     public void onPlayerSpawnBall(@NotNull PlayerInteractEvent event){
         var player = event.getPlayer();
-
         var world = player.getWorld();
 
         if(event.getAction().isRightClick()){
             var itemInHand = player.getInventory().getItemInMainHand();
+
             if(SoccerBallHelper.isSoccerBall(itemInHand)){
+                UUID playerId = player.getUniqueId();
+                long currentTime = System.currentTimeMillis();
+
+                if(spawnCooldowns.containsKey(playerId)){
+                    long lastSpawnTime = spawnCooldowns.get(playerId);
+                    long timeElapsed = currentTime - lastSpawnTime;
+
+                    long cooldownTime = 250L;
+                    if (timeElapsed < cooldownTime) {
+                        event.setCancelled(true);
+                        return;
+                    }
+                }
+
                 itemInHand.subtract();
-                var ball = new Ball(world ,plugin);
+                var ball = new Ball(world, plugin);
 
                 ball.spawn(player.getLocation());
 
                 plugin.getBallManager().registerBall(ball);
+
+                spawnCooldowns.put(playerId, currentTime);
             }
         }
     }

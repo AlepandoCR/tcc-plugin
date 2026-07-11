@@ -1,6 +1,5 @@
 package tcc.gamers.ball.physics;
 
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import tcc.gamers.TCCPlugin;
@@ -13,45 +12,42 @@ import java.util.UUID;
 
 public class KickController {
 
-    private final BallController controller;
-
     private final @NotNull List<BallKickCharge> kickCharges;
 
     private final @NotNull TCCPlugin plugin;
 
-    public KickController(@NotNull TCCPlugin plugin, @NotNull BallController controller) {
-        this.controller = controller;
+    public KickController(@NotNull TCCPlugin plugin) {
         this.kickCharges = new ArrayList<>();
         this.plugin = plugin;
     }
 
-    public void tryKick(@NotNull LivingEntity kicker){
+    public void tryKick(@NotNull LivingEntity kicker, @NotNull BallController controller){
         BallKickCharge charge = kickCharges.stream()
                 .filter(c -> c.getManagedEntity().getUniqueId().equals(kicker.getUniqueId()))
                 .findFirst()
                 .orElse(null);
 
         if(charge == null){
-            charge = new BallKickCharge(kicker, plugin);
+            charge = new BallKickCharge(kicker, plugin, () -> removeCharge(kicker.getUniqueId()));
             charge.start();
             kickCharges.add(charge);
         }
         else{
-            controller.getPhysicManager().kickBall(kicker, charge.consumeCharge());
+            var distance = kicker.getLocation().distance(controller.getBukkitBall().getLocation());
+            if(distance <= 2.7){
+                controller.getPhysicManager().kickBall(kicker, charge.consumeCharge());
+            }
         }
-        trimCharges();
+        trimCharges(controller);
     }
 
-    public void trimCharges(){
-        // clean charge manager for entities too far away
+    public void trimCharges(@NotNull BallController controller){
         var near = controller.getBukkitBall().getNearbyEntities(45, 45, 45);
-
-        kickCharges.forEach(charge -> {
-            if(!near.contains(charge.getManagedEntity())){
-                removeCharge(charge.getManagedEntity().getUniqueId());
-            }
+        kickCharges.removeIf(charge -> {
+            boolean stale = !near.contains(charge.getManagedEntity());
+            if (stale) charge.stop();
+            return stale;
         });
-
     }
 
     public void removeCharge(@NotNull UUID managedEntityUniqueIdentifier){

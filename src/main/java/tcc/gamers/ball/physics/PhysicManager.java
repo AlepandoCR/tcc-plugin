@@ -29,13 +29,15 @@ public class PhysicManager {
     /** Vertical bounce velocity retention (floor/ceiling) */
     public static final double VERTICAL_BOUNCE_FACTOR = 0.3;
     /** Minimum bounce speed to prevent stuck balls */
-    public static final double MIN_BOUNCE_SPEED = -0.1;
+    public static final double MIN_BOUNCE_SPEED = -0.009;
     /** Ground friction XZ (horizontal damping) */
     public static final double GROUND_DRAG_XZ = 0.9;
     /** Ground friction Y (vertical damping) */
     public static final double GROUND_DRAG_Y = 0.98;
     /** Dribbling pull factor (player interaction) */
     public static final double DRIBBLING_PULL_FACTOR = 0.5;
+
+    private static final double MAX_FALL_SPEED = -3.0;
 
     /**
      * Constructs physics manager with ball controller reference.
@@ -54,7 +56,13 @@ public class PhysicManager {
      * @param ball NMS ball entity with velocity data
      */
     public void calculateBallPhysics(@NotNull LivingEntity ball) {
+        Vec3 delta = ball.getDeltaMovement();
+        if (delta.y < MAX_FALL_SPEED) {
+            ball.setDeltaMovement(new Vec3(delta.x, MAX_FALL_SPEED, delta.z));
+        }
+
         org.bukkit.entity.LivingEntity bukkitBall = controller.getBukkitBall();
+
 
         boolean wasVerticalCollision = ball.verticalCollision;
         boolean wasHorizontalCollision = ball.horizontalCollision;
@@ -92,7 +100,7 @@ public class PhysicManager {
         double nearestDistance = Double.MAX_VALUE;
 
         // Scan nearby entities in a 1.0 block radius
-        for (Entity entity : bukkitBall.getNearbyEntities(1.0, 1.0, 1.0)) {
+        for (Entity entity : bukkitBall.getNearbyEntities(0.6, 0.6, 0.6)) {
             if (entity instanceof org.bukkit.entity.LivingEntity && !entity.equals(bukkitBall)) {
                 double distance = entity.getLocation().distance(bukkitBall.getLocation());
                 if (distance <= 1.0 && distance < nearestDistance) {
